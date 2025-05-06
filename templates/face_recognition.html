@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}人脸考勤 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    .attendance-options {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 80px;
+    }
+    .attendance-options h2 {
+        margin-bottom: 40px;
+        font-weight: bold;
+        color: #3a0ca3;
+    }
+    .option-cards {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+    }
+    .option-card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px rgba(67, 97, 238, 0.10);
+        padding: 40px 50px;
+        text-align: center;
+        transition: box-shadow 0.3s, transform 0.3s;
+        cursor: pointer;
+        min-width: 220px;
+        min-height: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .option-card:hover {
+        box-shadow: 0 8px 32px rgba(67, 97, 238, 0.18);
+        transform: translateY(-6px) scale(1.03);
+    }
+    .option-card .icon {
+        font-size: 3em;
+        margin-bottom: 18px;
+        color: #4361ee;
+    }
+    .option-card .title {
+        font-size: 1.3em;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #222;
+    }
+    .option-card .desc {
+        font-size: 1em;
+        color: #666;
+    }
+    @media (max-width: 700px) {
+        .option-cards {
+            flex-direction: column;
+            gap: 24px;
+        }
+        .option-card {
+            min-width: 0;
+            width: 90vw;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-options">
+    <h2>请选择考勤操作</h2>
+    <div class="option-cards">
+        <a href="{{ url_for('attendance.face_check_in_page') }}" class="option-card">
+            <div class="icon"><i class="fas fa-sign-in-alt text-success"></i></div>
+            <div class="title">人脸签到</div>
+            <div class="desc">开始一天的工作</div>
+        </a>
+        <a href="{{ url_for('attendance.face_check_out_page') }}" class="option-card">
+            <div class="icon"><i class="fas fa-sign-out-alt text-danger"></i></div>
+            <div class="title">人脸签退</div>
+            <div class="desc">结束一天的工作</div>
+        </a>
+        <a href="{{ url_for('face_test') }}" class="option-card">
+            <div class="icon"><i class="fas fa-vial"></i></div>
+            <div class="title">人脸测试</div>
+            <div class="desc">测试人脸识别与表情识别效果</div>
+        </a>
+    </div>
+    {% if session['role'] == 'admin' %}
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">返回</a>
+    {% else %}
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">返回</a>
+    {% endif %}
+</div>
+{% endblock %}

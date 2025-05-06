@@ -1,0 +1,730 @@
+{% extends "base.html" %}
+
+{% block title %}用户仪表板 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --primary-light: #4895ef;
+        --primary-dark: #3f37c9;
+        --secondary-color: #4cc9f0;
+        --success-color: #2ecc71;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --info-color: #3498db;
+        --card-bg: white;
+        --text-color: #333;
+        --text-light: #7f8c8d;
+        --border-radius: 12px;
+        --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e2e8f0 100%);
+        font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+        min-height: 100vh;
+    }
+
+    /* 仪表板布局 */
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* 顶部导航栏 */
+    .top-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--box-shadow);
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .logo i {
+        font-size: 28px;
+    }
+
+    .user-controls {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .user-info {
+        text-align: right;
+    }
+
+    .user-name {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--text-color);
+    }
+
+    .user-role {
+        font-size: 14px;
+        color: var(--text-light);
+    }
+
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .logout-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    /* 欢迎卡片 */
+    .welcome-card {
+        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        border-radius: var(--border-radius);
+        padding: 35px;
+        margin-bottom: 35px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 30px rgba(67, 97, 238, 0.25);
+    }
+
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .welcome-card::after {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        left: -50px;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-card h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 15px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .welcome-card p {
+        opacity: 0.9;
+        font-size: 18px;
+        margin-bottom: 0;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 仪表板网格布局 */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .side-content {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    /* 统计卡片栅格 */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+    }
+
+    .stats-card {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        border-top: 5px solid transparent;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-card:nth-child(1) {
+        border-top-color: var(--success-color);
+    }
+
+    .stats-card:nth-child(2) {
+        border-top-color: var(--warning-color);
+    }
+
+    .stats-card:nth-child(3) {
+        border-top-color: var(--primary-color);
+    }
+
+    .stats-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: white;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-icon.attendance { 
+        background: linear-gradient(135deg, #2ecc71, #1abc9c); 
+    }
+    
+    .stats-icon.target { 
+        background: linear-gradient(135deg, #f39c12, #f1c40f); 
+    }
+    
+    .stats-icon.worked { 
+        background: linear-gradient(135deg, #3498db, #2980b9); 
+    }
+
+    .stats-number {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--text-color);
+        margin-bottom: 8px;
+    }
+
+    .stats-label {
+        color: var(--text-light);
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    /* 考勤卡片 */
+    .attendance-card {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .attendance-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .attendance-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .attendance-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .attendance-title i {
+        color: var(--primary-color);
+        font-size: 22px;
+    }
+
+    .attendance-badge {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+    }
+
+    .attendance-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .attendance-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .attendance-item:hover {
+        background-color: rgba(245, 247, 250, 0.7);
+        border-radius: 8px;
+        transform: translateX(5px);
+    }
+
+    .attendance-item:last-child {
+        border-bottom: none;
+    }
+
+    .attendance-date {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--text-color);
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .attendance-date i {
+        color: var(--primary-color);
+    }
+
+    .attendance-time {
+        background-color: rgba(67, 97, 238, 0.1);
+        color: var(--primary-color);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    /* 考勤统计卡片 */
+    .stats-widget {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    .stats-widget:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-widget i {
+        font-size: 48px;
+        color: var(--info-color);
+        margin-bottom: 20px;
+    }
+
+    .stats-widget h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 15px;
+    }
+
+    .stats-widget p {
+        color: var(--text-light);
+        font-size: 16px;
+        margin-bottom: 25px;
+    }
+
+    .stats-btn {
+        background: linear-gradient(135deg, var(--info-color), #2574a9);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .stats-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+    }
+
+    /* 导出卡片 */
+    .export-widget {
+        background-color: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--box-shadow);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .export-widget:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .export-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--danger-color), #c0392b);
+        box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+    }
+
+    .export-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 15px;
+    }
+
+    .export-desc {
+        color: var(--text-light);
+        font-size: 16px;
+        margin-bottom: 25px;
+    }
+
+    .export-btn {
+        background: linear-gradient(135deg, var(--danger-color), #c0392b);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+    }
+
+    .export-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+    }
+
+    .check-in-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+
+    .check-in-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-light);
+    }
+
+    .empty-state i {
+        font-size: 60px;
+        margin-bottom: 20px;
+        color: rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state p {
+        font-size: 18px;
+        margin-bottom: 24px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .alert-warning {
+        background-color: rgba(243, 156, 18, 0.2);
+        border-left: 5px solid var(--warning-color);
+        color: #9a5d00;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1100px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .top-nav {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .user-controls {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .attendance-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        
+        .check-in-btn,
+        .stats-btn,
+        .export-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 顶部导航栏 -->
+    <div class="top-nav">
+        <div class="logo">
+            <i class="fas fa-fingerprint"></i>
+            <span>人脸识别考勤系统</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-info">
+                <div class="user-name">{{ user.name }}</div>
+                <div class="user-role">{% if user.role == 'admin' %}管理员{% else %}普通用户{% endif %}</div>
+            </div>
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
+            </a>
+        </div>
+    </div>
+
+    <!-- 欢迎卡片 -->
+    <div class="welcome-card">
+        <div class="welcome-content">
+            <h1>您好，{{ user.name }}</h1>
+            <p>今天是 {{ now_str }}，祝您工作愉快！</p>
+            {% if error_message %}
+            <div class="alert alert-warning mt-3" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error_message }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 仪表板网格布局 -->
+    <div class="dashboard-grid">
+        <div class="main-content">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-icon attendance">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stats-number">{{ monthly_days }}</div>
+                    <div class="stats-label">本月已打卡天数</div>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-icon target">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="stats-number">20</div>
+                    <div class="stats-label">本月目标天数</div>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-icon worked">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-number">{{ user.days_worked }}</div>
+                    <div class="stats-label">已工作天数</div>
+                </div>
+            </div>
+
+            <!-- 今日打卡 -->
+            <div class="attendance-card">
+                <div class="attendance-header">
+                    <div class="attendance-title">
+                        <i class="far fa-calendar-alt"></i>
+                        今日打卡状态
+                    </div>
+                    {% if checked_today %}
+                    <div class="attendance-badge">
+                        <i class="fas fa-check-circle"></i>
+                        已完成打卡
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('face_recognition') }}" class="check-in-btn">
+                        <i class="fas fa-camera"></i>
+                        立即打卡
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 最近打卡记录 -->
+            <div class="attendance-card">
+                <div class="attendance-header">
+                    <div class="attendance-title">
+                        <i class="fas fa-history"></i>
+                        最近打卡记录
+                    </div>
+                </div>
+                
+                {% if recent_records %}
+                <ul class="attendance-list">
+                    {% for record in recent_records %}
+                    <li class="attendance-item">
+                        <div class="attendance-date">
+                            <i class="far fa-calendar"></i>
+                            {{ record.check_date.strftime('%Y-%m-%d') }}
+                        </div>
+                        <div class="attendance-time">{{ record.check_time }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <i class="far fa-calendar-times"></i>
+                    <p>暂无打卡记录</p>
+                    <a href="{{ url_for('face_recognition') }}" class="check-in-btn">
+                        <i class="fas fa-camera"></i>
+                        立即开始打卡
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="side-content">
+            <!-- 考勤统计入口 -->
+            <div class="stats-widget">
+                <i class="fas fa-chart-pie"></i>
+                <h3>我的考勤统计</h3>
+                <p>查看个人考勤统计和分析</p>
+                <a href="{{ url_for('attendance_statistics') }}" class="stats-btn">
+                    <i class="fas fa-chart-line"></i> 查看统计
+                </a>
+            </div>
+
+            <!-- 导出考勤记录 -->
+            <div class="export-widget">
+                <div class="export-icon">
+                    <i class="fas fa-file-export"></i>
+                </div>
+                <div class="export-title">导出考勤记录</div>
+                <div class="export-desc">下载个人考勤记录报表</div>
+                <a href="{{ url_for('attendance_query') }}" class="export-btn">
+                    <i class="fas fa-download"></i> 导出记录
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

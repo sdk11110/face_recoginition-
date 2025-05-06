@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>测试页面</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-container">
+                <form id="testForm">
+                    <div class="form-group">
+                        <label for="testData">测试数据</label>
+                        <input type="text" class="form-control" id="testData" name="testData" placeholder="输入测试数据">
+                    </div>
+                    <button type="submit" class="btn btn-primary">测试</button>
+                </form>
+                <div id="result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('testForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const testData = document.getElementById('testData').value;
+    
+    fetch('/test_api', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: testData })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultDiv = document.getElementById('result');
+        if (data.success) {
+            resultDiv.innerHTML = '<div class="alert alert-success">测试成功：' + JSON.stringify(data.data) + '</div>';
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-danger">测试失败：' + data.message + '</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML = '<div class="alert alert-danger">系统错误</div>';
+    });
+});
+</script>
+
+<style>
+.form-container {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>考勤记录导出</h2>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success" onclick="exportToExcel()">
+                <i class="fas fa-file-excel"></i> 导出到Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            {% if is_admin %}
+                            <th>姓名</th>
+                            {% endif %}
+                            <th>日期</th>
+                            <th>签到时间</th>
+                            <th>签退时间</th>
+                            <th>签到状态</th>
+                            <th>签退状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            {% if is_admin %}
+                            <td>{{ record.name }}</td>
+                            {% endif %}
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.check_in }}</td>
+                            <td>{{ record.check_out if record.check_out else '未签退' }}</td>
+                            <td>
+                                {% if record.status == '迟到' %}
+                                <span class="text-danger">{{ record.status }}</span>
+                                {% else %}
+                                <span class="text-success">{{ record.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.leave_status == '早退' %}
+                                <span class="text-danger">{{ record.leave_status }}</span>
+                                {% elif record.leave_status == '未签退' %}
+                                <span class="text-warning">{{ record.leave_status }}</span>
+                                {% else %}
+                                <span class="text-success">{{ record.leave_status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+function exportToExcel() {
+    const table = document.getElementById('attendanceTable');
+    const wb = XLSX.utils.table_to_book(table, {sheet: "考勤记录"});
+    const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
+
+    function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+    }
+
+    const blob = new Blob([s2ab(wbout)], {type: 'application/octet-stream'});
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '考勤记录.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %} 

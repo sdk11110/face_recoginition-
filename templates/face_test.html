@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人脸识别测试</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .back-button {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            color: #0d6efd;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-button:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .card {
+            background: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #0d6efd;
+        }
+        .card-icon.success {
+            color: #28a745;
+        }
+        .card-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .card-text {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .btn-action {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: none;
+            background-color: #0d6efd;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+        }
+        .btn-action.success {
+            background-color: #28a745;
+        }
+        .btn-action.success:hover {
+            background-color: #218838;
+        }
+        .preview-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 1.5rem;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            border-radius: 15px;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        .preview-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .result-container {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: 15px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        .result-item {
+            margin: 0.8rem 0;
+            padding: 0.8rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .test-button-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .main-test-button {
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            text-decoration: none;
+        }
+        .main-test-button:hover {
+            transform: translateY(-2px);
+            background-color: #218838;
+            color: white;
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+        }
+        .main-test-button i {
+            font-size: 1.4rem;
+        }
+        .test-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .performance-section {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .table td, .table th {
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        .table-responsive {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('face_recognition') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i> 返回
+        </a>
+
+        <!-- 功能卡片网格 -->
+        <div class="card-grid">
+            <!-- 实时摄像头测试卡片 -->
+            <div class="card">
+                <i class="fas fa-camera card-icon"></i>
+                <h2 class="card-title">实时摄像头测试</h2>
+                <p class="card-text">使用摄像头实时进行人脸识别测试</p>
+                <div class="preview-container">
+                    <video id="videoElement" autoplay playsinline style="display: none;"></video>
+                    <div id="cameraPlaceholder" class="preview-image">
+                        <i class="fas fa-camera fa-3x"></i>
+                        <p class="mt-2">点击下方按钮开启摄像头</p>
+                    </div>
+                </div>
+                <div class="btn-group w-100" role="group">
+                    <button id="cameraButton" class="btn-action" style="background-color: #28a745;">
+                        <i class="fas fa-power-off"></i> 开启摄像头
+                    </button>
+                    <button id="startButton" class="btn-action" style="display: none;">
+                        <i class="fas fa-camera"></i> 开始测试
+                    </button>
+                </div>
+                <div id="resultContainer" class="result-container">
+                    <h4 class="mb-3">测试结果</h4>
+                    <div class="result-item">
+                        <strong>识别状态：</strong>
+                        <span id="recognitionStatus"></span>
+                    </div>
+                    <div class="result-item">
+                        <strong>识别到的人员：</strong>
+                        <span id="recognizedName"></span>
+                    </div>
+                    <div class="result-item">
+                        <strong>人脸识别置信度：</strong>
+                        <span id="faceConfidence"></span>
+                    </div>
+                    <div class="result-item">
+                        <strong>表情：</strong>
+                        <span id="emotion"></span>
+                    </div>
+                    <div class="result-item">
+                        <strong>表情识别置信度：</strong>
+                        <span id="emotionConfidence"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 性能测试卡片 -->
+            <div class="card">
+                <i class="fas fa-chart-line card-icon"></i>
+                <h2 class="card-title">性能测试</h2>
+                <p class="card-text">测试系统的各项性能指标</p>
+                <div class="test-button-container">
+                    <button id="performanceTestButton" class="main-test-button">
+                        <i class="fas fa-play"></i> 开始性能测试
+                    </button>
+                    <p class="test-description">将测试人脸识别、视频流处理、页面加载和查询响应时间</p>
+                </div>
+                <div id="performanceResultContainer" class="result-container">
+                    <h4 class="mb-3">性能测试结果</h4>
+                    <!-- 单张人脸识别测试结果 -->
+                    <div class="performance-section mb-4">
+                        <h5 class="mb-3">单张人脸识别测试</h5>
+                        <div class="result-item">
+                            <strong>平均识别时间：</strong>
+                            <span id="avgRecognitionTime">-- ms</span>
+                        </div>
+                        <div class="result-item">
+                            <strong>测试图片数量：</strong>
+                            <span id="testedImages">--</span>
+                        </div>
+                        <div class="result-item">
+                            <strong>成功识别数量：</strong>
+                            <span id="recognizedCount">--</span>
+                        </div>
+                        <div class="result-item">
+                            <strong>识别成功率：</strong>
+                            <span id="recognitionRate">--%</span>
+                        </div>
+                        <!-- 详细识别结果表格 -->
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>图片名称</th>
+                                        <th>识别结果</th>
+                                        <th>处理时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recognitionDetails">
+                                    <!-- 将通过 JavaScript 动态填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他性能指标 -->
+                    <div class="performance-section mb-4">
+                        <h5 class="mb-3">其他性能指标</h5>
+                        <div class="result-item">
+                            <strong>实时视频流处理帧率：</strong>
+                            <span id="fpsRate">-- FPS</span>
+                        </div>
+                        <div class="result-item">
+                            <strong>Web页面平均加载时间：</strong>
+                            <span id="pageLoadTime">-- s</span>
+                        </div>
+                        <div class="result-item">
+                            <strong>考勤记录查询响应时间：</strong>
+                            <span id="queryTime">-- s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let video = document.getElementById('videoElement');
+        let cameraButton = document.getElementById('cameraButton');
+        let startButton = document.getElementById('startButton');
+        let resultContainer = document.getElementById('resultContainer');
+        let cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        let stream = null;
+        let isCameraOn = false;
+
+        // 初始化摄像头
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                cameraPlaceholder.style.display = 'none';
+                startButton.style.display = 'block';
+                cameraButton.innerHTML = '<i class="fas fa-power-off"></i> 关闭摄像头';
+                cameraButton.style.backgroundColor = '#dc3545';
+                isCameraOn = true;
+            } catch (err) {
+                console.error('摄像头访问失败:', err);
+                alert('无法访问摄像头，请确保已授予摄像头访问权限。');
+            }
+        }
+
+        // 关闭摄像头
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            video.srcObject = null;
+            video.style.display = 'none';
+            cameraPlaceholder.style.display = 'flex';
+            startButton.style.display = 'none';
+            cameraButton.innerHTML = '<i class="fas fa-power-off"></i> 开启摄像头';
+            cameraButton.style.backgroundColor = '#28a745';
+            isCameraOn = false;
+        }
+
+        // 捕获图像并发送到服务器
+        async function captureAndTest() {
+            if (!stream) {
+                alert('请先开启摄像头');
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            try {
+                startButton.disabled = true;
+                startButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 处理中...';
+
+                // 将图像转换为blob
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.9);
+                });
+
+                const formData = new FormData();
+                formData.append('image', blob);
+
+                console.log('发送请求到服务器...');
+                const response = await fetch('/face_recognition_test', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('服务器响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('服务器返回结果:', result);
+                
+                // 确保结果容器可见
+                resultContainer.style.display = 'block';
+                
+                // 更新结果显示
+                const statusElement = document.getElementById('recognitionStatus');
+                const nameElement = document.getElementById('recognizedName');
+                const faceConfElement = document.getElementById('faceConfidence');
+                const emotionElement = document.getElementById('emotion');
+                const emotionConfElement = document.getElementById('emotionConfidence');
+
+                if (statusElement) {
+                    statusElement.textContent = result.message || '未知错误';
+                    statusElement.className = result.status === 'success' ? 'text-success' : 'text-danger';
+                }
+
+                if (result.details) {
+                    if (nameElement) nameElement.textContent = result.details.recognized_name || '未识别';
+                    if (faceConfElement) faceConfElement.textContent = result.details.confidence || '未知';
+                    if (emotionElement) emotionElement.textContent = result.details.emotion || '未知';
+                    if (emotionConfElement) emotionConfElement.textContent = result.details.emotion_confidence || '未知';
+                } else {
+                    if (nameElement) nameElement.textContent = '未识别';
+                    if (faceConfElement) faceConfElement.textContent = '未知';
+                    if (emotionElement) emotionElement.textContent = '未知';
+                    if (emotionConfElement) emotionConfElement.textContent = '未知';
+                }
+            } catch (error) {
+                console.error('请求失败:', error);
+                resultContainer.style.display = 'block';
+                const statusElement = document.getElementById('recognitionStatus');
+                if (statusElement) {
+                    statusElement.textContent = '测试请求失败：' + error.message;
+                    statusElement.className = 'text-danger';
+                }
+            } finally {
+                startButton.disabled = false;
+                startButton.innerHTML = '<i class="fas fa-camera"></i> 开始测试';
+            }
+        }
+
+        // 事件监听器
+        cameraButton.addEventListener('click', () => {
+            if (isCameraOn) {
+                stopCamera();
+            } else {
+                initCamera();
+            }
+        });
+        startButton.addEventListener('click', captureAndTest);
+
+        // 页面关闭时清理资源
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+
+        // 性能测试相关代码
+        document.getElementById('performanceTestButton').addEventListener('click', async function() {
+            // 如果摄像头开着，先关闭摄像头
+            if (isCameraOn) {
+                stopCamera();
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 测试中...';
+            
+            try {
+                // 执行人脸识别测试
+                const recognitionResponse = await fetch('/performance_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        type: 'recognition'
+                    })
+                });
+
+                if (!recognitionResponse.ok) {
+                    throw new Error(`性能测试失败: ${recognitionResponse.status}`);
+                }
+
+                const recognitionData = await recognitionResponse.json();
+                
+                if (recognitionData.status === 'success') {
+                    // 更新基本信息
+                    document.getElementById('avgRecognitionTime').textContent = recognitionData.recognition_time + ' ms';
+                    document.getElementById('testedImages').textContent = recognitionData.tested_images;
+                    document.getElementById('recognizedCount').textContent = recognitionData.recognized_count;
+                    document.getElementById('recognitionRate').textContent = recognitionData.recognition_rate + '%';
+                    
+                    // 更新详细识别结果表格
+                    const detailsTableBody = document.getElementById('recognitionDetails');
+                    detailsTableBody.innerHTML = '';
+                    recognitionData.details.forEach(result => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${result.image_name}</td>
+                            <td>${result.recognized_name}</td>
+                            <td>${result.time} ms</td>
+                        `;
+                        detailsTableBody.appendChild(row);
+                    });
+                }
+                
+                // 执行视频流测试
+                const fpsResponse = await fetch('/performance_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        type: 'fps'
+                    })
+                });
+
+                if (!fpsResponse.ok) {
+                    throw new Error(`视频流测试失败: ${fpsResponse.status}`);
+                }
+
+                const fpsData = await fpsResponse.json();
+                if (fpsData.status === 'success') {
+                    document.getElementById('fpsRate').textContent = fpsData.fps + ' FPS';
+                }
+                
+                // 执行页面加载测试
+                const loadResponse = await fetch('/performance_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        type: 'page_load'
+                    })
+                });
+
+                if (!loadResponse.ok) {
+                    throw new Error(`页面加载测试失败: ${loadResponse.status}`);
+                }
+
+                const loadData = await loadResponse.json();
+                if (loadData.status === 'success') {
+                    document.getElementById('pageLoadTime').textContent = loadData.load_time + ' s';
+                }
+                
+                // 执行查询响应测试
+                const queryResponse = await fetch('/performance_test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        type: 'query'
+                    })
+                });
+
+                if (!queryResponse.ok) {
+                    throw new Error(`查询响应测试失败: ${queryResponse.status}`);
+                }
+
+                const queryData = await queryResponse.json();
+                if (queryData.status === 'success') {
+                    document.getElementById('queryTime').textContent = queryData.query_time + ' s';
+                }
+                
+                // 显示结果容器
+                document.getElementById('performanceResultContainer').style.display = 'block';
+                
+            } catch (error) {
+                console.error('性能测试失败:', error);
+                alert('性能测试过程中出现错误: ' + error.message);
+            } finally {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-play"></i> 开始性能测试';
+            }
+        });
+    </script>
+</body>
+</html> 

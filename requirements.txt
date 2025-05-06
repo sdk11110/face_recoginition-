@@ -1,0 +1,11 @@
+flask==2.0.1
+opencv-python
+numpy
+pandas
+scikit-image
+mysql-connector-python
+python-dotenv
+face_recognition
+torch
+torchvision
+torchaudio

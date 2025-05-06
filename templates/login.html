@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 人脸识别考勤系统</title>
+    
+    <!-- 引入Google字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 引入Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <!-- 引入自定义样式 -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4a6fff;
+            --primary-dark: #3a5eee;
+            --secondary-color: #ff6b6b;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --danger-color: #e74c3c;
+            --text-color: #333;
+            --text-light: #7f8c8d;
+            --bg-color: #f5f8fa;
+            --card-color: rgba(255, 255, 255, 0.95);
+            --border-radius: 12px;
+            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-size: 400% 400%;
+            animation: gradientAnimation 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 1rem;
+        }
+        
+        .login-card {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .login-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .login-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            position: relative;
+        }
+        
+        .login-body {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            transition: var(--transition);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.2);
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+        
+        .icon-input {
+            padding-left: 2.75rem;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+            opacity: 0;
+            z-index: -1;
+            transition: var(--transition);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(74, 111, 255, 0.3);
+        }
+        
+        .btn:hover::before {
+            opacity: 1;
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(74, 111, 255, 0.3);
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-color);
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-icon {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 1.5rem;
+        }
+        
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+        
+        .login-footer {
+            text-align: center;
+            padding: 0 2rem 2rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .system-error {
+            color: var(--danger-color);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            background-color: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            display: none;
+        }
+        
+        @media (max-width: 576px) {
+            .login-container {
+                padding: 0.5rem;
+            }
+            
+            .login-header {
+                padding: 1.5rem;
+            }
+            
+            .login-body {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <h1 class="login-title">人脸识别考勤系统</h1>
+                <p class="login-subtitle">现代化的考勤解决方案</p>
+            </div>
+            
+            <div class="login-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+                <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="form-group">
+                        <label class="form-label" for="username">用户名</label>
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" class="form-control icon-input" id="username" name="username" required>
+                        </div>
+                        <div class="error-message" id="username-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="password">密码</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control icon-input" id="password" name="password" required>
+                        </div>
+                        <div class="error-message" id="password-error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="role">选择角色</label>
+                        <div class="input-group">
+                            <i class="fas fa-user-tag input-icon"></i>
+                            <select class="form-control icon-input" id="role" name="role" required>
+                                <option value="" disabled selected>-- 请选择 --</option>
+                                <option value="user">学生</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                        <div class="error-message" id="role-error"></div>
+                    </div>
+                    
+                    <div class="forgot-password">
+                        <a href="#">忘记密码？</a>
+                    </div>
+                    
+                    <button type="submit" class="btn">登录</button>
+                    <div class="system-error" id="system-error"></div>
+                </form>
+            </div>
+            
+            <div class="login-footer">
+                <p>© 2025 人脸识别考勤系统</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // 清除之前的错误信息
+            document.querySelectorAll('.error-message, .system-error').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            let hasError = false;
+            
+            // 验证用户名
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                document.getElementById('username-error').textContent = '请输入用户名';
+                document.getElementById('username-error').style.display = 'block';
+                hasError = true;
+            }
+            
+            // 验证密码
+            const password = document.getElementById('password').value.trim();
+            if (!password) {
+                document.getElementById('password-error').textContent = '请输入密码';
+                document.getElementById('password-error').style.display = 'block';
+                hasError = true;
+            }
+            
+            // 验证角色选择
+            const role = document.getElementById('role').value;
+            if (!role) {
+                document.getElementById('role-error').textContent = '请选择角色';
+                document.getElementById('role-error').style.display = 'block';
+                hasError = true;
+            }
+            
+            if (!hasError) {
+                this.submit();
+            }
+        });
+    </script>
+</body>
+</html> 

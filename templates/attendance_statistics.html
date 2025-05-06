@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}考勤统计 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    .back-button {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        color: #495057;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+        background-color: #e9ecef;
+        color: #212529;
+        text-decoration: none;
+    }
+
+    .back-button i {
+        font-size: 16px;
+    }
+
+    .stats-container {
+        padding: 2rem 0;
+        position: relative;
+    }
+
+    .stats-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .stats-header h2 {
+        font-size: 2.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .stats-header p {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+    }
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card .icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #3498db;
+    }
+
+    .stat-card .title {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .pie-chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .emotion-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .emotion-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.2rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+
+    .emotion-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .emotion-icon {
+        font-size: 2rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .emotion-name {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .emotion-count {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    .emotion-percentage {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+    }
+
+    .chart-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .user-rankings {
+        margin-top: 2rem;
+    }
+
+    .ranking-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .ranking-table th,
+    .ranking-table td {
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+    }
+
+    .ranking-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .ranking-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .ranking-table .rank {
+        font-weight: 600;
+        color: #3498db;
+    }
+
+    .admin-stats-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .admin-stats-header h3 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .admin-stats-header p {
+        color: #7f8c8d;
+        margin: 0;
+    }
+
+    .form-container {
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        margin-bottom: 2rem;
+    }
+
+    .statistics-container {
+        margin-top: 20px;
+    }
+
+    .stat-card {
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-align: center;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .stat-card h4 {
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 1.1rem;
+        color: #7f8c8d;
+    }
+
+    .stat-card p {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container stats-container">
+    <div class="stats-header">
+        <h2>考勤统计</h2>
+        {# 可以添加对当前月份的显示 #}
+    </div>
+
+    {# 月份选择表单 #}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-container">
+                <form method="GET" action="{{ url_for('attendance.attendance_statistics') }}"> {# 修改为 GET 请求，重新加载页面 #}
+                    <div class="form-group mb-3"> {# 使用 bootstrap 间距 #}
+                        <label for="month">选择月份</label>
+                        <input type="month" class="form-control" id="month" name="month" value="{{ request.args.get('month', '') }}"> {# 保留已选月份 #}
+                    </div>
+                    <button type="submit" class="btn btn-primary">查询</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# 统计卡片，直接使用后端变量 #}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="statistics-container">
+                <div class="row">
+                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
+                        <div class="stat-card">
+                            <h4>总天数</h4>
+                            <p>{{ total_days }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
+                        <div class="stat-card">
+                            <h4>正常天数</h4>
+                            <p>{{ normal_days }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
+                        <div class="stat-card">
+                            <h4>迟到天数</h4>
+                            <p>{{ late_days }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
+                        <div class="stat-card">
+                            <h4>早退天数</h4>
+                            <p>{{ early_leave_days }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- 这里添加图表和表格 --- #}
+    <div class="row mt-4">
+        {# 每日出勤趋势图 #}
+        <div class="col-md-8 mb-4">
+            <div class="chart-container">
+                <h4 class="chart-title">每日出勤人数趋势 ({{ selected_month }})</h4>
+                <canvas id="attendanceTrendChart"></canvas>
+            </div>
+        </div>
+
+        {# 情绪统计 (改为扇形图) #}
+        <div class="col-md-4 mb-4">
+            <div class="pie-chart-container">
+                <h4 class="chart-title">情绪统计</h4>
+                {% if emotion_stats %}
+                    <canvas id="emotionPieChart"></canvas>
+                {% else %}
+                    <p class="text-muted">暂无情绪数据</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# 用户出勤排名 (仅管理员可见) #}
+    {% if is_admin and user_rankings %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="user-rankings">
+                <h4>用户出勤排名 ({{ selected_month }})</h4>
+                <table class="ranking-table mt-3">
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>姓名</th>
+                            <th>出勤天数</th>
+                            <th>正常天数</th>
+                            <th>迟到天数</th>
+                            <th>早退/未签退天数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in user_rankings %}
+                        <tr>
+                            <td class="rank">{{ loop.index }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.attendance_days or 0 }}</td>
+                            <td>{{ user.normal_days or 0 }}</td>
+                            <td>{{ user.late_days or 0 }}</td>
+                            <td>{{ user.early_leave_days or 0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {# --- 图表和表格结束 --- #}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# 引入 Chart.js (如果 base.html 没有引入，需要在这里引入) #}
+{# <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 每日出勤趋势图
+    const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
+    const dates = JSON.parse('{{ dates|tojson|safe }}');
+    const attendanceData = JSON.parse('{{ attendance_data|tojson|safe }}');
+
+    // 检查数据是否有效
+    if (Array.isArray(dates) && Array.isArray(attendanceData)) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: '出勤人数',
+                    data: attendanceData,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // 允许图表高度调整
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // 确保Y轴刻度为整数
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 情绪统计扇形图
+    const emotionCtx = document.getElementById('emotionPieChart')?.getContext('2d');
+    const emotionStats = JSON.parse('{{ emotion_stats|tojson|safe }}');
+    if (emotionCtx && emotionStats && Object.keys(emotionStats).length > 0) {
+        const emotionLabels = Object.keys(emotionStats);
+        const emotionCounts = Object.values(emotionStats);
+        
+        // 创建情绪到颜色的映射
+        const emotionColorMap = {
+            '开心': 'rgba(255, 206, 86, 0.7)', // 黄色
+            '平静': 'rgba(54, 162, 235, 0.7)', // 蓝色
+            '难过': 'rgba(108, 117, 125, 0.7)', // 灰色
+            '惊讶': 'rgba(153, 102, 255, 0.7)',// 紫色
+            '生气': 'rgba(255, 99, 132, 0.7)',  // 红色
+            '恐惧': 'rgba(75, 192, 192, 0.7)', // 青色 (假设有)
+            '厌恶': 'rgba(255, 159, 64, 0.7)', // 橙色 (假设有)
+            // 可以为其他可能的情绪添加默认颜色
+            'default': 'rgba(199, 199, 199, 0.7)' // 灰色
+        };
+
+        // 根据标签从映射中获取颜色
+        const backgroundColors = emotionLabels.map(label => emotionColorMap[label] || emotionColorMap['default']);
+
+        new Chart(emotionCtx, {
+            type: 'pie',
+            data: {
+                labels: emotionLabels,
+                datasets: [{
+                    label: '情绪次数',
+                    data: emotionCounts,
+                    backgroundColor: backgroundColors, // 使用映射后的颜色
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + '次';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else if (emotionCtx) {
+        // 如果有 canvas 但没数据，可以显示提示信息
+        // emotionCtx.font = "16px Arial";
+        // emotionCtx.fillStyle = "#ccc";
+        // emotionCtx.textAlign = "center";
+        // emotionCtx.fillText("暂无情绪数据", emotionCtx.canvas.width / 2, emotionCtx.canvas.height / 2);
+    }
+
+    // 月份选择器的默认值 (如果后端传递了)
+    const selectedMonth = "{{ selected_month }}";
+    if (selectedMonth) {
+        document.getElementById('month').value = selectedMonth;
+    }
+});
+</script>
+{% endblock %} 

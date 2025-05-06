@@ -1,0 +1,1049 @@
+{% extends "base.html" %}
+
+{% block title %}管理员仪表板 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --primary-light: #4895ef;
+        --primary-dark: #3f37c9;
+        --secondary-color: #4cc9f0;
+        --success-color: #2ecc71;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --info-color: #3498db;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-400: #ced4da;
+        --gray-500: #adb5bd;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --gray-900: #212529;
+        --card-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding-left: 250px;
+        transition: var(--transition);
+    }
+
+    /* 侧边栏样式 */
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-800) 100%);
+        color: white;
+        z-index: 1000;
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .sidebar-logo i {
+        font-size: 1.5rem;
+        color: var(--primary-light);
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem 0;
+        flex-grow: 1;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1.5rem;
+        color: var(--gray-400);
+        text-decoration: none;
+        transition: var(--transition);
+        border-left: 3px solid transparent;
+        margin: 0.25rem 0;
+    }
+
+    .nav-item i {
+        width: 1.5rem;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .nav-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        transform: translateX(5px);
+    }
+
+    .nav-item.active {
+        background: rgba(67, 97, 238, 0.2);
+        color: white;
+        border-left: 3px solid var(--primary-light);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: white;
+    }
+
+    .user-role {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .sidebar-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    /* 主内容区域 */
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* 欢迎卡片 */
+    .welcome-card {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        border-radius: 1rem;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+        transform: rotate(30deg);
+    }
+
+    .welcome-content h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-content p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .welcome-actions {
+        display: flex;
+        gap: 1rem;
+        z-index: 10;
+    }
+
+    .welcome-actions .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        border: none;
+    }
+
+    .welcome-actions .btn-light {
+        background: white;
+        color: var(--primary-dark);
+    }
+
+    .welcome-actions .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 统计卡片 */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border-top: 4px solid transparent;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-card:nth-child(1) {
+        border-top-color: var(--primary-color);
+    }
+
+    .stats-card:nth-child(2) {
+        border-top-color: var(--success-color);
+    }
+
+    .stats-card:nth-child(3) {
+        border-top-color: var(--warning-color);
+    }
+
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-icon.today {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    }
+
+    .stats-icon.total {
+        background: linear-gradient(135deg, var(--success-color), #27ae60);
+    }
+
+    .stats-icon.rate {
+        background: linear-gradient(135deg, var(--warning-color), #d35400);
+    }
+
+    .stats-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+    }
+
+    /* 数据展示区域 */
+    .data-cards {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1.5rem;
+    }
+
+    .recent-records, .chart-container {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        height: 100%;
+    }
+
+    .recent-records:hover, .chart-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-container {
+        position: relative;
+        min-height: 400px;
+    }
+
+    #weeklyChart {
+        width: 100% !important;
+        height: 350px !important;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
+    }
+
+    .record-list {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    .record-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        transition: var(--transition);
+        border: 1px solid transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .record-item:hover {
+        background: var(--gray-100);
+        border-color: var(--gray-200);
+        transform: translateX(5px);
+    }
+
+    .record-name {
+        font-weight: 600;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .record-time {
+        color: var(--gray-600);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* 考勤统计卡片 */
+    .stats-widget {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        text-align: center;
+        height: 100%;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-widget:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-widget i {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: 1.25rem;
+    }
+
+    .stats-widget h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .stats-widget p {
+        color: var(--gray-600);
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-widget .btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .stats-widget .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .data-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding-left: 0;
+        }
+        
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar.mobile-show {
+            transform: translateX(0);
+        }
+        
+        .welcome-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .welcome-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* 性能测试样式 */
+    .performance-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .metric-item {
+        background: var(--gray-100);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .metric-item:hover {
+        background: var(--gray-200);
+        transform: translateY(-2px);
+    }
+
+    .metric-label {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .test-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .test-controls .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .test-controls .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 性能测试进度条样式 */
+    .progress-container {
+        width: 100%;
+        height: 6px;
+        background-color: var(--gray-200);
+        border-radius: 3px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .metric-details {
+        font-size: 0.8rem;
+        color: var(--gray-600);
+        margin-top: 0.25rem;
+    }
+
+    #startTestBtn {
+        position: relative;
+        overflow: hidden;
+    }
+
+    #startTestBtn.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    #startTestBtn.loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 左侧导航栏 -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <i class="fas fa-fingerprint"></i>
+            <span>人脸识别考勤系统</span>
+        </div>
+    </div>
+    <div class="sidebar-nav">
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-item active">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>仪表盘</span>
+        </a>
+        <a href="{{ url_for('face_recognition') }}" class="nav-item">
+            <i class="fas fa-user-check"></i>
+            <span>人脸考勤</span>
+        </a>
+        <a href="{{ url_for('attendance.attendance_query') }}" class="nav-item">
+            <i class="fas fa-chart-bar"></i>
+            <span>考勤管理</span>
+        </a>
+        <a href="{{ url_for('admin.face_management') }}" class="nav-item">
+            <i class="fas fa-users-cog"></i>
+            <span>用户管理</span>
+        </a>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="user-details">
+            <div class="user-name">{{ session.get('name', '管理员') }}</div>
+            <div class="user-role">系统管理</div>
+        </div>
+    </div>
+    <div class="sidebar-footer">
+        <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>退出登录</span>
+        </a>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="dashboard-container">
+    <!-- 欢迎卡片 -->
+    <div class="welcome-card">
+        <div class="welcome-content">
+            <h2>欢迎回来，{{ session.get('name', '管理员') }}</h2>
+            <p>今天是 {{ current_date }}，系统运行正常</p>
+        </div>
+        <div class="welcome-actions">
+            <a href="{{ url_for('attendance.attendance_query') }}" class="btn btn-light">
+                <i class="fas fa-search"></i> 查询考勤
+            </a>
+            <a href="{{ url_for('admin.face_management') }}" class="btn btn-light">
+                <i class="fas fa-users-cog"></i> 人脸管理
+            </a>
+        </div>
+    </div>
+
+    <!-- 仪表板网格布局 -->
+    <div class="dashboard-grid">
+        <div class="main-content">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-icon today">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stats-number">{{ today_attendance }}</div>
+                    <div class="stats-label">今日出勤人数</div>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-icon total">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-number">{{ user_count }}</div>
+                    <div class="stats-label">总用户数</div>
+                </div>
+
+                <div class="stats-card">
+                    <div class="stats-icon rate">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-number">{{ attendance_rate }}%</div>
+                    <div class="stats-label">本月出勤率</div>
+                </div>
+            </div>
+
+            <!-- 性能测试卡片 -->
+            <div class="stats-card" style="margin-top: 1.5rem;">
+                <div class="section-title">
+                    <i class="fas fa-tachometer-alt"></i>性能测试结果
+                </div>
+                <div class="performance-metrics">
+                    <div class="metric-item">
+                        <div class="metric-label">单张人脸识别平均耗时</div>
+                        <div class="metric-value" id="recognitionTime">-- ms</div>
+                        <div class="metric-details" id="recognitionDetails"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="recognitionProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">实时视频流处理帧率</div>
+                        <div class="metric-value" id="fpsRate">-- FPS</div>
+                        <div class="metric-details" id="fpsDetails"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="fpsProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Web页面平均加载时间</div>
+                        <div class="metric-value" id="pageLoadTime">-- s</div>
+                        <div class="metric-details" id="pageLoadDetails"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="pageLoadProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">考勤记录查询响应时间</div>
+                        <div class="metric-value" id="queryTime">-- s</div>
+                        <div class="metric-details" id="queryDetails"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="queryProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="test-controls" style="margin-top: 1rem;">
+                    <button class="btn btn-primary" id="startTestBtn" onclick="startPerformanceTest()">
+                        <i class="fas fa-play"></i> 开始性能测试
+                    </button>
+                </div>
+            </div>
+
+            <!-- 数据卡片 -->
+            <div class="data-cards">
+                <!-- 最近打卡记录 -->
+                <div class="recent-records">
+                    <div class="section-title">
+                        <i class="fas fa-history"></i>最近打卡记录
+                    </div>
+                    {% if recent_records and recent_records|length > 0 %}
+                        <div class="record-list">
+                        {% for record in recent_records %}
+                            <div class="record-item">
+                                <div class="record-name">
+                                    <i class="fas fa-user"></i>{{ record[0] }}
+                                </div>
+                                <div class="record-time">
+                                    <i class="far fa-clock"></i>{{ record[1].strftime('%H:%M:%S') }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>暂无打卡记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- 本周出勤统计 -->
+                <div class="chart-container">
+                    <div class="section-title">
+                        <i class="fas fa-chart-bar"></i>本周出勤统计
+                    </div>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-content">
+            <!-- 考勤统计入口 -->
+            <div class="stats-widget">
+                <i class="fas fa-chart-bar"></i>
+                <h5>考勤统计</h5>
+                <p>查看考勤统计数据和分析报表</p>
+                <a href="{{ url_for('attendance.attendance_statistics') }}" class="btn">
+                    <i class="fas fa-chart-line"></i> 查看统计
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取本周日期标签
+    const today = new Date();
+    const monday = new Date(today);
+    monday.setDate(monday.getDate() - monday.getDay() + 1);
+    const weekDays = Array.from({length: 7}, (_, i) => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        return date.toLocaleDateString('zh-CN', { weekday: 'short' });
+    });
+
+    // 绘制周出勤图表
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: weekDays,
+            datasets: [{
+                label: '出勤人数',
+                data: JSON.parse('{{ weekly_attendance|tojson }}'),
+                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                borderColor: 'rgba(67, 97, 238, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(67, 97, 238, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    displayColors: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+
+// 性能测试相关函数
+let isTesting = false;
+
+async function startPerformanceTest() {
+    if (isTesting) return;
+    
+    try {
+        isTesting = true;
+        const startBtn = document.getElementById('startTestBtn');
+        startBtn.classList.add('loading');
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 测试中...';
+        
+        // 重置所有进度条和详情
+        resetAllProgress();
+        
+        // 测试单张人脸识别耗时
+        await testRecognitionTime();
+        
+        // 测试视频流帧率
+        await testVideoFPS();
+        
+        // 测试页面加载时间
+        await testPageLoadTime();
+        
+        // 测试查询响应时间
+        await testQueryTime();
+        
+    } catch (error) {
+        console.error('性能测试失败:', error);
+        alert('性能测试过程中出现错误，请重试');
+    } finally {
+        isTesting = false;
+        const startBtn = document.getElementById('startTestBtn');
+        startBtn.classList.remove('loading');
+        startBtn.innerHTML = '<i class="fas fa-play"></i> 开始性能测试';
+    }
+}
+
+function resetAllProgress() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    const details = document.querySelectorAll('.metric-details');
+    
+    progressBars.forEach(bar => bar.style.width = '0%');
+    details.forEach(detail => detail.textContent = '');
+}
+
+function updateProgress(progressId, value, max = 100) {
+    const progress = document.getElementById(progressId);
+    const percentage = (value / max) * 100;
+    progress.style.width = `${percentage}%`;
+}
+
+async function testRecognitionTime() {
+    try {
+        const response = await fetch('/performance_test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: 'recognition' })
+        });
+        
+        if (!response.ok) {
+            throw new Error('测试失败');
+        }
+        
+        const data = await response.json();
+        document.getElementById('recognitionTime').textContent = data.recognition_time + ' ms';
+        document.getElementById('recognitionDetails').textContent = `测试图片数: ${data.tested_images}`;
+        updateProgress('recognitionProgress', 100);
+    } catch (error) {
+        console.error('人脸识别测试失败:', error);
+        document.getElementById('recognitionTime').textContent = '-- ms';
+        document.getElementById('recognitionDetails').textContent = '测试失败';
+    }
+}
+
+async function testVideoFPS() {
+    try {
+        const response = await fetch('/performance_test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: 'fps' })
+        });
+        
+        if (!response.ok) {
+            throw new Error('测试失败');
+        }
+        
+        const data = await response.json();
+        document.getElementById('fpsRate').textContent = data.fps + ' FPS';
+        document.getElementById('fpsDetails').textContent = 
+            `测试时长: ${data.duration}秒, 处理帧数: ${data.tested_frames}`;
+        updateProgress('fpsProgress', 100);
+    } catch (error) {
+        console.error('视频流帧率测试失败:', error);
+        document.getElementById('fpsRate').textContent = '-- FPS';
+        document.getElementById('fpsDetails').textContent = '测试失败';
+    }
+}
+
+async function testPageLoadTime() {
+    try {
+        const response = await fetch('/performance_test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: 'page_load' })
+        });
+        
+        if (!response.ok) {
+            throw new Error('测试失败');
+        }
+        
+        const data = await response.json();
+        document.getElementById('pageLoadTime').textContent = data.load_time + ' s';
+        document.getElementById('pageLoadDetails').textContent = `测试次数: ${data.test_count}`;
+        updateProgress('pageLoadProgress', 100);
+    } catch (error) {
+        console.error('页面加载时间测试失败:', error);
+        document.getElementById('pageLoadTime').textContent = '-- s';
+        document.getElementById('pageLoadDetails').textContent = '测试失败';
+    }
+}
+
+async function testQueryTime() {
+    try {
+        const response = await fetch('/performance_test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: 'query' })
+        });
+        
+        if (!response.ok) {
+            throw new Error('测试失败');
+        }
+        
+        const data = await response.json();
+        document.getElementById('queryTime').textContent = data.query_time + ' s';
+        document.getElementById('queryDetails').textContent = `测试次数: ${data.test_count}`;
+        updateProgress('queryProgress', 100);
+    } catch (error) {
+        console.error('查询响应时间测试失败:', error);
+        document.getElementById('queryTime').textContent = '-- s';
+        document.getElementById('queryDetails').textContent = '测试失败';
+    }
+}
+</script>
+{% endblock %}
+            

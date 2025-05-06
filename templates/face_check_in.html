@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == 'check_in' %}
+        人脸签到 - 人脸识别考勤系统
+    {% else %}
+        人脸签退 - 人脸识别考勤系统
+    {% endif %}
+{% endblock %}
+
+{% block styles %}
+<style>
+    .video-container {
+        position: relative;
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+    }
+
+    #videoElement {
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: scaleX(-1);
+    }
+
+    .controls {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .btn-check-in {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-check-in:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-check-in:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .result-container {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+
+    .result-success {
+        border-left: 4px solid #4CAF50;
+    }
+
+    .result-warning {
+        border-left: 4px solid #FFC107;
+    }
+
+    .result-error {
+        border-left: 4px solid #f44336;
+    }
+
+    .emotion-result {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .emotion-icon {
+        font-size: 1.5em;
+        margin-right: 10px;
+    }
+
+    .emotion-text {
+        font-size: 1.1em;
+        color: #666;
+    }
+
+    .emotion-confidence {
+        font-size: 0.9em;
+        color: #888;
+        margin-left: 10px;
+    }
+
+    .loading-spinner {
+        display: none;
+        margin: 20px auto;
+        text-align: center;
+    }
+
+    .loading-spinner i {
+        animation: spin 1s infinite linear;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .person-list {
+        margin-top: 10px;
+    }
+    
+    .person-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 5px;
+    }
+    
+    .person-success {
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .person-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    
+    .person-error {
+        background-color: rgba(244, 67, 54, 0.1);
+    }
+    
+    .person-badge {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin-right: 10px;
+        color: white;
+    }
+    
+    .badge-success {
+        background-color: #4CAF50;
+    }
+    
+    .badge-warning {
+        background-color: #FFC107;
+        color: #212529;
+    }
+    
+    .badge-danger {
+        background-color: #f44336;
+    }
+    
+    .multi-check-toggle {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    
+    .toggle-switch {
+        margin-left: 10px;
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: #4CAF50;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">
+                        <i class="fas fa-camera"></i> 
+                        {% if mode == 'check_in' %}
+                            人脸识别签到
+                        {% else %}
+                            人脸识别签退
+                        {% endif %}
+                    </h2>
+                    
+                    <div class="video-container">
+                        <video id="videoElement" autoplay playsinline></video>
+                    </div>
+
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-2x"></i>
+                        <p>处理中...</p>
+                    </div>
+                    
+                    <div class="multi-check-toggle">
+                        <span>多人识别模式</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="multiModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="controls">
+                        {% if mode == 'check_in' %}
+                        <button id="checkInBtn" class="btn-check-in">
+                            <i class="fas fa-sign-in-alt"></i> 开始签到
+                        </button>
+                        {% else %}
+                        <button id="checkOutBtn" class="btn-check-in">
+                            <i class="fas fa-sign-out-alt"></i> 开始签退
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- 单人识别结果容器 -->
+                    <div id="resultContainer" class="result-container">
+                        <h4 id="resultTitle" class="mb-3"></h4>
+                        <p id="resultMessage"></p>
+                        <div id="emotionResult" class="emotion-result">
+                            <span class="emotion-icon"></span>
+                            <span class="emotion-text"></span>
+                            <span class="emotion-confidence"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- 多人识别结果容器 -->
+                    <div id="multiResultContainer" class="result-container">
+                        <h4 id="multiResultTitle" class="mb-3"></h4>
+                        <p id="multiResultMessage"></p>
+                        <div id="successList" class="person-list"></div>
+                        <div id="alreadyCheckedList" class="person-list"></div>
+                        <div id="failedList" class="person-list"></div>
+                    </div>
+
+                    <a href="{{ url_for('face_recognition') }}" class="btn btn-secondary">返回</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let video = null;
+let stream = null;
+let isMultiMode = false;
+let currentMode = '{{ mode }}';  // 将模式存储在 JavaScript 变量中
+
+async function initCamera() {
+    try {
+        video = document.getElementById('videoElement');
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        });
+        video.srcObject = stream;
+    } catch (err) {
+        console.error('摄像头初始化失败:', err);
+        alert('无法访问摄像头，请确保已授予摄像头权限。');
+    }
+}
+
+function showResult(success, message, details) {
+    // 隐藏多人结果容器
+    document.getElementById('multiResultContainer').style.display = 'none';
+    
+    const container = document.getElementById('resultContainer');
+    const title = document.getElementById('resultTitle');
+    const messageEl = document.getElementById('resultMessage');
+    const emotionResult = document.getElementById('emotionResult');
+    const emotionIcon = emotionResult.querySelector('.emotion-icon');
+    const emotionText = emotionResult.querySelector('.emotion-text');
+    const emotionConfidence = emotionResult.querySelector('.emotion-confidence');
+
+    container.style.display = 'block';
+    container.className = 'result-container ' + (success ? 'result-success' : 'result-error');
+    
+    title.innerHTML = success ? '<i class="fas fa-check-circle text-success"></i> 签到成功' : 
+                               '<i class="fas fa-times-circle text-danger"></i> 签到失败';
+    messageEl.textContent = message;
+
+    // 显示表情识别结果
+    if (details && details.emotion) {
+        emotionResult.style.display = 'block';
+        
+        // 设置表情图标
+        let emotionIconClass = 'fas ';
+        switch(details.emotion) {
+            case '开心': emotionIconClass += 'fa-smile text-success'; break;
+            case '难过': emotionIconClass += 'fa-sad-tear text-primary'; break;
+            case '生气': emotionIconClass += 'fa-angry text-danger'; break;
+            case '惊讶': emotionIconClass += 'fa-surprise text-warning'; break;
+            case '平静': emotionIconClass += 'fa-meh text-info'; break;
+            default: emotionIconClass += 'fa-face-meh text-secondary';
+        }
+        emotionIcon.className = 'emotion-icon ' + emotionIconClass;
+        
+        // 设置表情文本和置信度
+        emotionText.textContent = `检测到的表情：${details.emotion}`;
+        emotionConfidence.textContent = `置信度：${details.emotion_confidence}`;
+    } else {
+        emotionResult.style.display = 'none';
+    }
+}
+
+function showMultiResult(status, message, details) {
+    // 隐藏单人结果容器
+    document.getElementById('resultContainer').style.display = 'none';
+    
+    const container = document.getElementById('multiResultContainer');
+    const title = document.getElementById('multiResultTitle');
+    const messageEl = document.getElementById('multiResultMessage');
+    const successList = document.getElementById('successList');
+    const alreadyCheckedList = document.getElementById('alreadyCheckedList');
+    const failedList = document.getElementById('failedList');
+    
+    // 清空之前的内容
+    successList.innerHTML = '';
+    alreadyCheckedList.innerHTML = '';
+    failedList.innerHTML = '';
+    
+    // 设置标题和容器样式
+    let statusClass = '';
+    let iconClass = '';
+    let titleText = '';
+    
+    switch(status) {
+        case 'success':
+            statusClass = 'result-success';
+            iconClass = 'fa-check-circle text-success';
+            titleText = '批量签到成功';
+            break;
+        case 'warning':
+            statusClass = 'result-warning';
+            iconClass = 'fa-exclamation-circle text-warning';
+            titleText = '部分签到成功';
+            break;
+        case 'error':
+        default:
+            statusClass = 'result-error';
+            iconClass = 'fa-times-circle text-danger';
+            titleText = '签到失败';
+            break;
+    }
+    
+    container.style.display = 'block';
+    container.className = 'result-container ' + statusClass;
+    title.innerHTML = `<i class="fas ${iconClass}"></i> ${titleText}`;
+    messageEl.textContent = message;
+    
+    // 显示成功列表
+    if (details && details.success && details.success.length > 0) {
+        const successHeader = document.createElement('h5');
+        successHeader.innerHTML = '<i class="fas fa-check-circle text-success"></i> 成功签到';
+        successList.appendChild(successHeader);
+        
+        details.success.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'person-item person-success';
+            item.innerHTML = `
+                <span class="person-badge badge-success">成功</span>
+                <span>${name}</span>
+            `;
+            successList.appendChild(item);
+        });
+    }
+    
+    // 显示已签到列表
+    if (details && details.already_checked && details.already_checked.length > 0) {
+        const alreadyHeader = document.createElement('h5');
+        alreadyHeader.innerHTML = '<i class="fas fa-info-circle text-warning"></i> 已签到人员';
+        alreadyCheckedList.appendChild(alreadyHeader);
+        
+        details.already_checked.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'person-item person-warning';
+            item.innerHTML = `
+                <span class="person-badge badge-warning">已签到</span>
+                <span>${name}</span>
+            `;
+            alreadyCheckedList.appendChild(item);
+        });
+    }
+    
+    // 显示失败列表
+    if (details && details.failed && details.failed.length > 0) {
+        const failedHeader = document.createElement('h5');
+        failedHeader.innerHTML = '<i class="fas fa-times-circle text-danger"></i> 未识别人员';
+        failedList.appendChild(failedHeader);
+        
+        details.failed.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'person-item person-error';
+            item.innerHTML = `
+                <span class="person-badge badge-danger">未识别</span>
+                <span>${name}</span>
+            `;
+            failedList.appendChild(item);
+        });
+    }
+}
+
+async function captureAndSend(event) {
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    // 水平翻转绘制
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 显示加载动画
+    document.querySelector('.loading-spinner').style.display = 'block';
+    // 修改：使用变量 actionButton
+    const actionButton = document.getElementById(currentMode === 'check_in' ? 'checkInBtn' : 'checkOutBtn');
+    if (actionButton) actionButton.disabled = true;
+
+    // 用Promise包装toBlob
+    function canvasToBlob(canvas) {
+        return new Promise(resolve => {
+            canvas.toBlob(blob => resolve(blob), 'image/jpeg');
+        });
+    }
+
+    try {
+        const blob = await canvasToBlob(canvas);
+        const form = new FormData();
+        form.append('image', blob, 'check_in.jpg');
+
+        // 判断是签到还是签退及是否多人模式
+        let url = currentMode === 'check_in' ? '/face_check_in' : '/face_check_out';
+        
+        // 如果是多人模式，使用批量接口
+        if (isMultiMode) {
+            url = '/batch_check_in';
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            body: form
+        });
+
+        const result = await response.json();
+        
+        // 根据模式选择不同的显示方法
+        if (isMultiMode) {
+            showMultiResult(
+                result.status,
+                result.message,
+                result.details
+            );
+        } else {
+            showResult(
+                result.success,
+                result.message,
+                result.details
+            );
+        }
+    } catch (error) {
+        if (isMultiMode) {
+            showMultiResult('error', '请求失败，请重试');
+        } else {
+            showResult(false, '请求失败，请重试');
+        }
+        console.error('处理失败:', error);
+    } finally {
+        // 隐藏加载动画
+        document.querySelector('.loading-spinner').style.display = 'none';
+        // 修改：使用变量 actionButton
+        if (actionButton) actionButton.disabled = false;
+    }
+}
+
+// 监听多人模式开关
+document.getElementById('multiModeToggle').addEventListener('change', function(e) {
+    isMultiMode = e.target.checked;
+    // 切换模式时隐藏所有结果容器
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('multiResultContainer').style.display = 'none';
+});
+
+// 修改：只给当前模式对应的按钮添加监听器
+const actionButtonId = currentMode === 'check_in' ? 'checkInBtn' : 'checkOutBtn';
+const actionButton = document.getElementById(actionButtonId);
+if (actionButton) {
+    actionButton.addEventListener('click', captureAndSend);
+} else {
+    console.error(`错误：未找到按钮 #${actionButtonId}`);
+}
+
+// 页面加载完成后初始化摄像头
+document.addEventListener('DOMContentLoaded', initCamera);
+
+// 页面关闭时释放摄像头资源
+window.addEventListener('beforeunload', () => {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+{% endblock %} 

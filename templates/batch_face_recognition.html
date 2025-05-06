@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">批量人脸识别</h5>
+                </div>
+                <div class="card-body">
+                    <div class="video-container">
+                        <video id="video" width="100%" autoplay></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <button id="startBtn" class="btn btn-primary">开始识别</button>
+                        <button id="stopBtn" class="btn btn-danger" style="display: none;">停止识别</button>
+                    </div>
+                    <!-- 添加识别结果显示区域 -->
+                    <div id="recognitionResults" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">今日考勤记录</h5>
+                </div>
+                <div class="card-body">
+                    <div id="attendanceList" class="list-group">
+                        <!-- 考勤记录将在这里动态显示 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let startBtn = document.getElementById('startBtn');
+let stopBtn = document.getElementById('stopBtn');
+let recognitionResults = document.getElementById('recognitionResults');
+let stream = null;
+let recognitionInterval = null;
+
+// 初始化摄像头
+async function initCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+    } catch (err) {
+        console.error("摄像头访问失败:", err);
+        alert("无法访问摄像头，请检查权限设置");
+    }
+}
+
+// 开始识别
+startBtn.onclick = function() {
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'inline-block';
+    // 清空之前的识别结果
+    recognitionResults.innerHTML = '';
+    startRecognition();
+};
+
+// 停止识别
+stopBtn.onclick = function() {
+    stopBtn.style.display = 'none';
+    startBtn.style.display = 'inline-block';
+    stopRecognition();
+};
+
+// 执行批量识别
+function startRecognition() {
+    recognitionInterval = setInterval(async () => {
+        // 捕获当前视频帧
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        
+        // 将canvas转换为blob
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('image', blob);
+            
+            try {
+                const response = await fetch('/batch_check_in', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // 显示识别结果
+                displayRecognitionResults(result);
+                
+                // 更新考勤列表
+                if (result.status === 'success') {
+                    updateAttendanceList();
+                }
+            } catch (error) {
+                console.error('识别请求失败:', error);
+                displayError('识别请求失败，请检查网络连接');
+            }
+        }, 'image/jpeg');
+    }, 3000); // 每3秒执行一次识别
+}
+
+// 显示识别结果
+function displayRecognitionResults(result) {
+    // 创建新的结果显示元素
+    const resultElement = document.createElement('div');
+    resultElement.className = `alert alert-${getAlertClass(result.status)} mt-2`;
+    
+    // 构建结果内容
+    let resultHTML = `<strong>${result.message}</strong>`;
+    
+    // 如果有详细信息，显示人员列表
+    if (result.details) {
+        const { success, already_checked, failed } = result.details;
+        
+        if (success && success.length > 0) {
+            resultHTML += `<div class="mt-1"><span class="badge bg-success">成功打卡</span> ${success.join(', ')}</div>`;
+        }
+        
+        if (already_checked && already_checked.length > 0) {
+            resultHTML += `<div class="mt-1"><span class="badge bg-warning">已打卡</span> ${already_checked.join(', ')}</div>`;
+        }
+        
+        if (failed && failed.length > 0) {
+            resultHTML += `<div class="mt-1"><span class="badge bg-danger">未识别</span> ${failed.join(', ')}</div>`;
+        }
+    }
+    
+    resultElement.innerHTML = resultHTML;
+    
+    // 将结果添加到结果区域
+    recognitionResults.prepend(resultElement);
+    
+    // 限制显示的结果数量，保留最近5条
+    while (recognitionResults.children.length > 5) {
+        recognitionResults.removeChild(recognitionResults.lastChild);
+    }
+}
+
+// 根据状态获取Bootstrap警告类
+function getAlertClass(status) {
+    switch (status) {
+        case 'success': return 'success';
+        case 'warning': return 'warning';
+        case 'error': return 'danger';
+        default: return 'info';
+    }
+}
+
+// 显示错误信息
+function displayError(message) {
+    const errorElement = document.createElement('div');
+    errorElement.className = 'alert alert-danger mt-2';
+    errorElement.textContent = message;
+    
+    recognitionResults.prepend(errorElement);
+    
+    // 自动移除错误提示
+    setTimeout(() => {
+        if (errorElement.parentNode === recognitionResults) {
+            recognitionResults.removeChild(errorElement);
+        }
+    }, 5000);
+}
+
+// 停止识别
+function stopRecognition() {
+    if (recognitionInterval) {
+        clearInterval(recognitionInterval);
+        recognitionInterval = null;
+    }
+}
+
+// 更新考勤记录列表
+async function updateAttendanceList() {
+    try {
+        const response = await fetch('/get_attendance');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const attendanceList = document.getElementById('attendanceList');
+            attendanceList.innerHTML = data.records.map(record => `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>${record.name}</span>
+                        <span class="badge bg-primary">${record.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            console.error('获取考勤记录失败:', data.message);
+        }
+    } catch (error) {
+        console.error('获取考勤记录失败:', error);
+    }
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initCamera();
+    updateAttendanceList();
+    // 每30秒更新一次考勤记录
+    setInterval(updateAttendanceList, 30000);
+});
+
+// 页面关闭时清理资源
+window.onbeforeunload = function() {
+    stopRecognition();
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+};
+</script>
+{% endblock %} 
