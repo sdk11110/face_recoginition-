@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">人脸识别系统性能评估</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <form id="evaluationForm" method="post" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="testDatasetPath">测试数据集路径</label>
+                                    <input type="text" class="form-control" id="testDatasetPath" name="testDatasetPath" 
+                                           value="data/test_faces" placeholder="输入测试数据集路径">
+                                    <small class="form-text text-muted">默认路径为 data/test_faces</small>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">测试数据集结构示例</div>
+                                    <div class="card-body">
+                                        <pre><code>data/test_faces/
+├── 张三/
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   └── ...
+├── 李四/
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   └── ...
+└── ...</code></pre>
+                                        <p class="text-muted">每个人的文件夹名应该与系统中注册的用户名相匹配</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="useLocalData" name="useLocalData" value="1" checked>
+                                        <label class="form-check-label" for="useLocalData">
+                                            使用本地测试数据 (data/test_faces/sdk)
+                                        </label>
+                                        <small class="form-text text-muted">直接使用系统中已有的测试图像，无需上传</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mt-3">
+                                    <label>上传测试数据集 (可选)</label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="testDataUpload" name="testData" webkitdirectory directory multiple>
+                                        <label class="custom-file-label" for="testDataUpload">选择文件夹</label>
+                                    </div>
+                                    <small class="form-text text-muted">如果选择使用本地数据，此项将被忽略</small>
+                                </div>
+                                
+                                <button type="button" id="startEvaluationBtn" class="btn btn-primary mt-3">
+                                    开始评估
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h5>关于性能评估</h5>
+                                <p>系统将使用提供的测试数据集评估人脸识别系统的性能，包括：</p>
+                                <ul>
+                                    <li><strong>Top-1准确率</strong>：正确识别的人脸比例</li>
+                                    <li><strong>精确率 (Precision)</strong>：真正例 / (真正例 + 假正例)</li>
+                                    <li><strong>召回率 (Recall)</strong>：真正例 / (真正例 + 假反例)</li>
+                                    <li><strong>F1-Score</strong>：精确率和召回率的调和平均值</li>
+                                    <li><strong>拒识率 (FRR)</strong>：假反例 / (真正例 + 假反例)</li>
+                                    <li><strong>误识率 (FAR)</strong>：假正例 / (真反例 + 假正例)</li>
+                                </ul>
+                                <p>系统会自动生成ROC曲线和各种性能指标图表。</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 评估进度 -->
+                    <div id="evaluationProgress" class="mt-4" style="display: none;">
+                        <h5>评估进度</h5>
+                        <div class="alert alert-info" id="dataSourceInfo">
+                            使用本地数据进行评估
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p id="progressText" class="mt-2">准备中...</p>
+                    </div>
+                    
+                    <!-- 评估结果 -->
+                    <div id="evaluationResults" class="mt-4" style="display: none;">
+                        <h5>评估结果</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">性能指标</div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>最佳阈值</td>
+                                                    <td id="bestThreshold">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Top-1准确率</td>
+                                                    <td id="accuracy">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>精确率</td>
+                                                    <td id="precision">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>召回率</td>
+                                                    <td id="recall">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>F1-Score</td>
+                                                    <td id="f1Score">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>拒识率 (FRR)</td>
+                                                    <td id="frr">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>误识率 (FAR)</td>
+                                                    <td id="far">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>评估耗时</td>
+                                                    <td id="testTime">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">测试信息</div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>测试时间</td>
+                                                    <td id="testTimestamp">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>测试数据集</td>
+                                                    <td id="testDatasetInfo">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>已知人脸数量</td>
+                                                    <td id="knownFacesCount">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 图表结果 -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">ROC曲线</div>
+                                    <div class="card-body">
+                                        <img id="rocCurveImg" class="img-fluid" src="" alt="ROC曲线">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">性能指标图</div>
+                                    <div class="card-body">
+                                        <img id="metricsPlotImg" class="img-fluid" src="" alt="性能指标图">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 下载链接 -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">评估报告</div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <a id="downloadMetricsTable" href="#" class="btn btn-outline-primary btn-block">
+                                                    <i class="fas fa-download"></i> 下载性能指标表格
+                                                </a>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <a id="downloadSummary" href="#" class="btn btn-outline-primary btn-block">
+                                                    <i class="fas fa-download"></i> 下载评估摘要
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 显示选择的文件名
+    $('#testDataUpload').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').html(fileName || "选择文件夹");
+    });
+    
+    // 处理复选框和上传控件的交互
+    $('#useLocalData').on('change', function() {
+        if($(this).is(':checked')) {
+            // 如果选择使用本地数据，禁用上传控件
+            $('#testDataUpload').prop('disabled', true);
+            $('#testDataUpload').next('.custom-file-label').html("使用本地数据，无需上传");
+        } else {
+            // 如果不使用本地数据，启用上传控件
+            $('#testDataUpload').prop('disabled', false);
+            $('#testDataUpload').next('.custom-file-label').html("选择文件夹");
+        }
+    });
+    
+    // 初始化时触发一次复选框变更事件
+    $('#useLocalData').trigger('change');
+    
+    // 开始评估按钮点击事件
+    $('#startEvaluationBtn').on('click', function() {
+        // 显示进度条
+        $('#evaluationProgress').show();
+        $('#evaluationResults').hide();
+        $('.progress-bar').css('width', '10%');
+        $('#progressText').text('正在加载测试数据...');
+        
+        // 准备表单数据
+        var formData = new FormData($('#evaluationForm')[0]);
+        
+        // 发送评估请求
+        $.ajax({
+            url: '/start_evaluation',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total * 100;
+                        $('.progress-bar').css('width', Math.min(percentComplete + 10, 70) + '%');
+                        $('#progressText').text('上传测试数据: ' + Math.round(percentComplete) + '%');
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                if (response.status === 'processing') {
+                    // 评估已开始，开始轮询进度
+                    pollEvaluationProgress();
+                } else {
+                    showError('评估启动失败: ' + response.message);
+                }
+            },
+            error: function() {
+                showError('服务器错误，请稍后重试');
+            }
+        });
+    });
+    
+    // 轮询评估进度
+    function pollEvaluationProgress() {
+        var pollInterval = setInterval(function() {
+            $.ajax({
+                url: '/evaluation_progress',
+                type: 'GET',
+                success: function(response) {
+                    if (response.status === 'completed') {
+                        // 评估完成，显示结果
+                        clearInterval(pollInterval);
+                        $('.progress-bar').css('width', '100%');
+                        $('#progressText').text('评估完成!');
+                        displayResults(response.results);
+                    } else if (response.status === 'error') {
+                        // 评估出错
+                        clearInterval(pollInterval);
+                        showError('评估过程出错: ' + response.message);
+                    } else if (response.status === 'processing') {
+                        // 评估进行中，更新进度
+                        var progress = response.progress || 0;
+                        $('.progress-bar').css('width', (70 + progress * 0.3) + '%');
+                        $('#progressText').text(response.message || '正在评估...');
+                    }
+                },
+                error: function() {
+                    clearInterval(pollInterval);
+                    showError('无法获取评估进度');
+                }
+            });
+        }, 1000);
+    }
+    
+    // 显示评估结果
+    function displayResults(results) {
+        $('#evaluationResults').show();
+        
+        // 更新性能指标
+        $('#bestThreshold').text(results.best_threshold.toFixed(2));
+        $('#accuracy').text((results.best_metrics.accuracy * 100).toFixed(2) + '%');
+        $('#precision').text((results.best_metrics.precision * 100).toFixed(2) + '%');
+        $('#recall').text((results.best_metrics.recall * 100).toFixed(2) + '%');
+        $('#f1Score').text((results.best_metrics.f1_score * 100).toFixed(2) + '%');
+        $('#frr').text((results.best_metrics.frr * 100).toFixed(2) + '%');
+        $('#far').text((results.best_metrics.far * 100).toFixed(2) + '%');
+        $('#testTime').text(results.test_time.toFixed(2) + ' 秒');
+        
+        // 更新测试信息
+        $('#testTimestamp').text(new Date(results.timestamp).toLocaleString());
+        $('#testDatasetInfo').text(results.test_dataset);
+        $('#knownFacesCount').text(results.known_faces_count);
+        
+        // 更新图表
+        $('#rocCurveImg').attr('src', results.roc_curve_url);
+        $('#metricsPlotImg').attr('src', results.metrics_plot_url);
+        
+        // 更新下载链接
+        $('#downloadMetricsTable').attr('href', results.metrics_table_url);
+        $('#downloadSummary').attr('href', results.summary_url);
+    }
+    
+    // 显示错误信息
+    function showError(message) {
+        $('#evaluationProgress').hide();
+        $('#progressText').text('');
+        alert('错误: ' + message);
+    }
+});
+</script>
+{% endblock %} 

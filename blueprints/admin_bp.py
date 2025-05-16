@@ -177,6 +177,10 @@ def dashboard():
             LIMIT 5
         """)
         recent_attendance = db.cursor.fetchall()
+        
+        # 确保 recent_attendance 是可索引的列表，而不是字典
+        if recent_attendance and isinstance(recent_attendance[0], dict):
+            recent_attendance = [(record['user_name'], record['check_in_time']) for record in recent_attendance]
 
         # --- 计算仪表盘所需数据 ---
         today_str = datetime.now().strftime('%Y-%m-%d')
@@ -261,6 +265,42 @@ def users():
         logger.error(f"获取用户列表失败: {str(e)}")
         flash('获取用户列表失败，请稍后重试', 'danger')
         return render_template('admin/users.html')
+
+@admin_bp.route('/users_management')
+@admin_required
+def users_management():
+    """用户管理页面 - 详细版"""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor(dictionary=True)
+            
+            # 查询用户信息和考勤统计数据 - 移除不存在的字段 department 和 position
+            cursor.execute("""
+                SELECT 
+                    u.id, 
+                    u.username, 
+                    u.name, 
+                    u.role, 
+                    u.created_at,
+                    COUNT(a.id) as attendance_count
+                FROM 
+                    users u
+                LEFT JOIN 
+                    attendance a ON u.id = a.user_id
+                GROUP BY 
+                    u.id
+                ORDER BY 
+                    u.created_at DESC
+            """)
+            
+            users = cursor.fetchall()
+        
+        return render_template('users_management.html', users=users)
+        
+    except Exception as e:
+        logger.error(f"获取用户管理数据失败: {str(e)}")
+        flash('获取用户管理数据失败，请稍后重试', 'danger')
+        return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/user/<int:user_id>/toggle', methods=['POST'])
 @admin_required
@@ -383,16 +423,17 @@ def face_management():
             cursor = conn.cursor(dictionary=True)
             
             cursor.execute("""
-                SELECT u.id, u.name, u.username, COUNT(kf.id) as face_count
+                SELECT 
+                    u.id, 
+                    u.name, 
+                    u.username, 
+                    u.created_at, 
+                    COUNT(a.id) as attendance_count
                 FROM users u
-                LEFT JOIN known_faces kf ON u.id = kf.user_id
-                GROUP BY u.id, u.name, u.username
+                LEFT JOIN attendance a ON u.id = a.user_id
+                GROUP BY u.id, u.name, u.username, u.created_at
             """)
             users = cursor.fetchall()
-            
-            # with语句会自动关闭连接和游标，无需手动关闭
-            # cursor.close()
-            # conn.close()
         
         return render_template('face_management.html', users=users)
     except Exception as e:
@@ -405,7 +446,13 @@ def face_management():
 @admin_required
 def add_user():
     try:
-        data = request.get_json()
+        # 尝试获取 JSON 数据
+        try:
+            data = request.get_json()
+        except:
+            # 如果获取 JSON 失败，尝试获取表单数据
+            data = request.form.to_dict()
+        
         name = data.get('name')
         username = data.get('username')
         password = data.get('password')
@@ -413,28 +460,37 @@ def add_user():
         
         if not all([name, username, password]):
             return jsonify({'success': False, 'message': '请填写所有必填字段'})
+        
+        # 使用 with 语句管理数据库连接
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
             
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # 检查用户名是否已存在
-        cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
-        if cursor.fetchone():
-            cursor.close()
-            conn.close()
-            return jsonify({'success': False, 'message': '用户名已存在'})
+            # 检查用户名是否已存在
+            cursor.execute("SELECT id FROM users WHERE username = %s", (username,))
+            if cursor.fetchone():
+                return jsonify({'success': False, 'message': '用户名已存在'})
+                
+            # 添加新用户
+            cursor.execute("""
+                INSERT INTO users (name, username, password, role)
+                VALUES (%s, %s, %s, %s)
+            """, (name, username, password, role))
             
-        # 添加新用户
-        cursor.execute("""
-            INSERT INTO users (name, username, password, role)
-            VALUES (%s, %s, %s, %s)
-        """, (name, username, password, role))
+            # 获取新添加用户的 ID
+            user_id = cursor.lastrowid
+            
+            conn.commit()
         
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return jsonify({'success': True, 'message': '用户添加成功'})
+        # 返回成功响应，包含新用户的基本信息
+        return jsonify({
+            'success': True, 
+            'message': '用户添加成功',
+            'user': {
+                'id': user_id,
+                'username': username,
+                'name': name
+            }
+        })
         
     except Exception as e:
         logger.error(f"添加用户时出错: {str(e)}")

@@ -1,0 +1,434 @@
+{% extends "tech_layout.html" %}
+
+{% block title %}随机图片识别测试 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    .test-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: rgba(20, 30, 60, 0.8);
+        border-radius: 1rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
+        color: #fff;
+    }
+    
+    .test-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .test-header h2 {
+        font-size: 2rem;
+        color: #4a6fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .input-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #8a9baf;
+    }
+    
+    .input-group input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(74, 111, 255, 0.3);
+        background: rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .input-group small {
+        display: block;
+        margin-top: 0.5rem;
+        color: #8a9baf;
+    }
+    
+    .test-btn {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        background: linear-gradient(135deg, #4a6fff, #3f37c9);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .test-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .test-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .result-container {
+        margin-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1.5rem;
+    }
+    
+    .result-header {
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        color: #4a6fff;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .result-header i {
+        font-size: 1.5rem;
+    }
+    
+    .status-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .status-error {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .status-success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .metric-card {
+        background: rgba(30, 40, 70, 0.7);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        text-align: center;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #4a6fff;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #8a9baf;
+    }
+    
+    .charts-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .chart-box {
+        background: rgba(30, 40, 70, 0.7);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .chart-title {
+        text-align: center;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        color: #8a9baf;
+    }
+    
+    .chart-img {
+        width: 100%;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .loading-overlay.active {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    .loading-spinner {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 5px solid rgba(74, 111, 255, 0.2);
+        border-top: 5px solid #4a6fff;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .charts-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .metrics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <div class="test-header">
+        <h2>随机图片识别测试</h2>
+    </div>
+    
+    <div class="input-group">
+        <label for="test-path">测试图片文件夹路径:</label>
+        <input type="text" id="test-path" value="data/test_faces" placeholder="请输入相对于项目根目录的文件夹路径">
+        <small>请输入相对于项目根目录的文件夹路径。该文件夹应该包含分类的人脸图片子文件夹。</small>
+    </div>
+    
+    <button id="start-test-btn" class="test-btn">
+        <i class="fas fa-play"></i> 开始测试
+    </button>
+    
+    <!-- 结果容器，初始隐藏 -->
+    <div id="result-container" class="result-container" style="display: none;">
+        <div class="result-header">
+            <i class="fas fa-clipboard-check"></i> 测试结果:
+        </div>
+        
+        <div id="status-box" class="status-box">
+            <!-- 状态消息将在这里显示 -->
+        </div>
+        
+        <!-- 指标网格，包含重要性能指标 -->
+        <div id="metrics-grid" class="metrics-grid" style="display: none;">
+            <div class="metric-card">
+                <div id="accuracy-value" class="metric-value">--</div>
+                <div class="metric-label">准确率</div>
+            </div>
+            <div class="metric-card">
+                <div id="f1-score-value" class="metric-value">--</div>
+                <div class="metric-label">F1分数</div>
+            </div>
+            <div class="metric-card">
+                <div id="best-threshold-value" class="metric-value">--</div>
+                <div class="metric-label">最佳阈值</div>
+            </div>
+            <div class="metric-card">
+                <div id="far-value" class="metric-value">--</div>
+                <div class="metric-label">误识率(FAR)</div>
+            </div>
+            <div class="metric-card">
+                <div id="frr-value" class="metric-value">--</div>
+                <div class="metric-label">拒识率(FRR)</div>
+            </div>
+            <div class="metric-card">
+                <div id="test-time-value" class="metric-value">--</div>
+                <div class="metric-label">测试时间(秒)</div>
+            </div>
+        </div>
+        
+        <!-- 图表容器 -->
+        <div id="charts-container" class="charts-container" style="display: none;">
+            <div class="chart-box">
+                <div class="chart-title">性能指标</div>
+                <img id="metrics-plot" class="chart-img" src="" alt="性能指标图">
+            </div>
+            <div class="chart-box">
+                <div class="chart-title">ROC曲线</div>
+                <img id="roc-curve" class="chart-img" src="" alt="ROC曲线">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载遮罩 -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startTestBtn = document.getElementById('start-test-btn');
+    const testPathInput = document.getElementById('test-path');
+    const resultContainer = document.getElementById('result-container');
+    const statusBox = document.getElementById('status-box');
+    const metricsGrid = document.getElementById('metrics-grid');
+    const chartsContainer = document.getElementById('charts-container');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // 指标元素
+    const accuracyValue = document.getElementById('accuracy-value');
+    const f1ScoreValue = document.getElementById('f1-score-value');
+    const bestThresholdValue = document.getElementById('best-threshold-value');
+    const farValue = document.getElementById('far-value');
+    const frrValue = document.getElementById('frr-value');
+    const testTimeValue = document.getElementById('test-time-value');
+    
+    // 图表元素
+    const metricsPlot = document.getElementById('metrics-plot');
+    const rocCurve = document.getElementById('roc-curve');
+    
+    // 开始测试按钮点击事件
+    startTestBtn.addEventListener('click', function() {
+        const testPath = testPathInput.value.trim();
+        
+        if (!testPath) {
+            showStatus('error', '请输入测试图片文件夹路径');
+            return;
+        }
+        
+        // 显示加载遮罩
+        loadingOverlay.classList.add('active');
+        
+        // 禁用按钮
+        startTestBtn.disabled = true;
+        startTestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 测试中...';
+        
+        // 清除之前的结果
+        hideResults();
+        
+        // 发送AJAX请求
+        fetch('/run_face_evaluation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                test_path: testPath
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // 隐藏加载遮罩
+            loadingOverlay.classList.remove('active');
+            
+            // 启用按钮
+            startTestBtn.disabled = false;
+            startTestBtn.innerHTML = '<i class="fas fa-play"></i> 开始测试';
+            
+            // 显示结果容器
+            resultContainer.style.display = 'block';
+            
+            if (data.status === 'success') {
+                // 显示成功状态
+                showStatus('success', '测试成功完成！报告已生成。');
+                
+                // 更新性能指标
+                const summary = data.summary;
+                const metrics = summary.best_metrics;
+                
+                accuracyValue.textContent = (metrics.accuracy * 100).toFixed(2) + '%';
+                f1ScoreValue.textContent = (metrics.f1_score * 100).toFixed(2) + '%';
+                bestThresholdValue.textContent = summary.best_threshold.toFixed(2);
+                farValue.textContent = (metrics.far * 100).toFixed(2) + '%';
+                frrValue.textContent = (metrics.frr * 100).toFixed(2) + '%';
+                testTimeValue.textContent = summary.test_time.toFixed(2);
+                
+                // 显示指标网格
+                metricsGrid.style.display = 'grid';
+                
+                // 更新图表
+                metricsPlot.src = `/static/${data.metrics_plot}`;
+                rocCurve.src = `/static/${data.roc_curve}`;
+                
+                // 添加图片加载事件处理
+                metricsPlot.onload = function() {
+                    console.log('性能指标图加载成功');
+                };
+                
+                metricsPlot.onerror = function() {
+                    console.error('性能指标图加载失败', `/static/${data.metrics_plot}`);
+                    this.src = '/static/img/placeholder.png'; // 添加占位图
+                };
+                
+                rocCurve.onload = function() {
+                    console.log('ROC曲线图加载成功');
+                };
+                
+                rocCurve.onerror = function() {
+                    console.error('ROC曲线图加载失败', `/static/${data.roc_curve}`);
+                    this.src = '/static/img/placeholder.png'; // 添加占位图
+                };
+                
+                // 显示图表容器
+                chartsContainer.style.display = 'grid';
+            } else {
+                // 显示错误状态
+                showStatus('error', data.message || '测试过程中出现错误');
+            }
+        })
+        .catch(error => {
+            // 隐藏加载遮罩
+            loadingOverlay.classList.remove('active');
+            
+            // 启用按钮
+            startTestBtn.disabled = false;
+            startTestBtn.innerHTML = '<i class="fas fa-play"></i> 开始测试';
+            
+            // 显示结果容器并显示错误状态
+            resultContainer.style.display = 'block';
+            showStatus('error', '请求失败: ' + error.message);
+        });
+    });
+    
+    // 显示状态信息
+    function showStatus(type, message) {
+        statusBox.className = 'status-box status-' + type;
+        statusBox.innerHTML = `<p>${message}</p>`;
+    }
+    
+    // 隐藏结果
+    function hideResults() {
+        metricsGrid.style.display = 'none';
+        chartsContainer.style.display = 'none';
+    }
+})
+</script>
+{% endblock %} 

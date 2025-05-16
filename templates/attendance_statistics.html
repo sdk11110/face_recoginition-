@@ -4,108 +4,249 @@
 
 {% block styles %}
 <style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --success: #4cc9f0;
+        --warning: #f77f00;
+        --danger: #d62828;
+        --dark: #293241;
+        --light: #f8f9fa;
+        --light-gray: #edf2f4;
+        --gray: #8d99ae;
+        --white: #ffffff;
+        --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+        --card-radius: 0.75rem;
+    }
+
+    body {
+        background-color: #f5f7fa;
+        color: var(--dark);
+    }
+
     .back-button {
-        position: absolute;
+        position: fixed;
         left: 20px;
         top: 20px;
         padding: 8px 15px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        color: #495057;
+        background-color: var(--white);
+        border-radius: 50px;
+        box-shadow: var(--shadow);
+        color: var(--dark);
         text-decoration: none;
         display: flex;
         align-items: center;
         gap: 5px;
         transition: all 0.3s ease;
+        z-index: 100;
     }
 
     .back-button:hover {
-        background-color: #e9ecef;
-        color: #212529;
-        text-decoration: none;
-    }
-
-    .back-button i {
-        font-size: 16px;
+        background-color: var(--light-gray);
+        transform: translateY(-2px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
     }
 
     .stats-container {
-        padding: 2rem 0;
+        padding: 2rem 0 4rem;
         position: relative;
     }
 
-    .stats-header {
+    .page-header {
         text-align: center;
-        margin-bottom: 2rem;
-        color: #2c3e50;
+        margin-bottom: 3rem;
+        padding-bottom: 1.5rem;
+        position: relative;
     }
 
-    .stats-header h2 {
+    .page-header:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--primary-light));
+        border-radius: 2px;
+    }
+
+    .page-header h2 {
         font-size: 2.2rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(to right, var(--primary), var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .stats-header p {
-        color: #7f8c8d;
+    .page-header p {
+        color: var(--gray);
         font-size: 1.1rem;
     }
 
+    /* Filter Panel Styling */
+    .filter-panel {
+        background: var(--white);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-panel:hover {
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+    }
+
+    .filter-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-title i {
+        color: var(--primary);
+    }
+
+    input[type="month"] {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    input[type="month"]:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+        outline: none;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #3a55d2;
+        border-color: #3a55d2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+    }
+
+    .btn-success {
+        background-color: var(--success);
+        border-color: var(--success);
+        border-radius: 50px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-success:hover {
+        background-color: #3ab1d4;
+        border-color: #3ab1d4;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(76, 201, 240, 0.2);
+    }
+
+    /* Stats Cards Styling */
     .stats-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 1.5rem;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
 
     .stat-card {
-        background: white;
-        border-radius: 15px;
+        background: var(--white);
+        border-radius: var(--card-radius);
         padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .stat-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
     }
 
-    .stat-card .icon {
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary), var(--primary-light));
+    }
+
+    .stat-icon {
         font-size: 2rem;
-        margin-bottom: 1rem;
-        color: #3498db;
+        opacity: 0.2;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--primary);
     }
 
-    .stat-card .title {
-        font-size: 1.1rem;
-        color: #7f8c8d;
+    .stat-title {
+        font-size: 1rem;
+        color: var(--gray);
         margin-bottom: 0.5rem;
+        font-weight: 500;
     }
 
-    .stat-card .value {
-        font-size: 2rem;
-        font-weight: 600;
-        color: #2c3e50;
+    .stat-value {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 0.25rem;
     }
 
+    .stat-subtitle {
+        font-size: 0.9rem;
+        color: var(--gray);
+    }
+
+    /* Charts Styling */
     .chart-container {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        background: var(--white);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
         margin-bottom: 2rem;
-        max-height: 500px;
-        overflow-y: auto;
+        min-height: 400px;
+        height: 400px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
     }
 
-    .pie-chart-container {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
+    .chart-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
     }
 
     .chart-header {
@@ -116,318 +257,374 @@
     }
 
     .chart-title {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         font-weight: 600;
-        color: #2c3e50;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .emotion-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .emotion-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.2rem;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease;
-    }
-
-    .emotion-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .emotion-icon {
-        font-size: 2rem;
-        margin-bottom: 0.8rem;
-    }
-
-    .emotion-name {
+    .chart-title i {
+        color: var(--primary);
         font-size: 1.1rem;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
     }
 
-    .emotion-count {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #3498db;
+    /* Rankings Table Styling */
+    .rankings-container {
+        background: var(--white);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
     }
 
-    .emotion-percentage {
-        font-size: 0.9rem;
-        color: #7f8c8d;
+    .rankings-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
     }
 
-    .chart-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1.5rem;
+    .rankings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 1.5rem;
     }
-
-    @media (max-width: 992px) {
-        .chart-row {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .loading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.9);
+    
+    .rankings-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dark);
         display: flex;
-        justify-content: center;
         align-items: center;
-        z-index: 1000;
+        gap: 0.5rem;
     }
 
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .user-rankings {
-        margin-top: 2rem;
+    .rankings-title i {
+        color: var(--primary);
     }
 
     .ranking-table {
         width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-collapse: separate;
+        border-spacing: 0;
     }
 
     .ranking-table th,
     .ranking-table td {
         padding: 1rem;
         text-align: center;
-        border-bottom: 1px solid #eee;
     }
 
     .ranking-table th {
-        background: #f8f9fa;
+        background: var(--light-gray);
         font-weight: 600;
-        color: #2c3e50;
+        color: var(--dark);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .ranking-table th:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .ranking-table th:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .ranking-table tr {
+        transition: all 0.2s ease;
     }
 
     .ranking-table tr:hover {
-        background: #f8f9fa;
+        background: #f0f7ff;
+    }
+
+    .ranking-table td {
+        border-bottom: 1px solid #eaeaea;
+    }
+
+    .ranking-table tr:last-child td {
+        border-bottom: none;
     }
 
     .ranking-table .rank {
-        font-weight: 600;
-        color: #3498db;
+        font-weight: 700;
+        color: var(--primary);
     }
 
-    .admin-stats-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 10px;
-    }
-
-    .admin-stats-header h3 {
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-    }
-
-    .admin-stats-header p {
-        color: #7f8c8d;
-        margin: 0;
-    }
-
-    .form-container {
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-        margin-bottom: 2rem;
-    }
-
-    .statistics-container {
-        margin-top: 20px;
-    }
-
-    .stat-card {
-        padding: 20px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        text-align: center;
-        background-color: #f9f9f9;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .stat-card h4 {
-        margin-bottom: 10px;
-        color: #333;
-        font-size: 1.1rem;
-        color: #7f8c8d;
-    }
-
-    .stat-card p {
-        font-size: 2rem;
+    /* Medal Styling for Top 3 */
+    .medal-1, .medal-2, .medal-3 {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        color: white;
         font-weight: bold;
-        color: #007bff;
-        margin: 0;
+        font-size: 0.9rem;
     }
+
+    .medal-1 {
+        background: linear-gradient(to bottom right, #FFD700, #FFA500);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .medal-2 {
+        background: linear-gradient(to bottom right, #C0C0C0, #A9A9A9);
+        box-shadow: 0 0 10px rgba(192, 192, 192, 0.4);
+    }
+
+    .medal-3 {
+        background: linear-gradient(to bottom right, #CD7F32, #A0522D);
+        box-shadow: 0 0 10px rgba(205, 127, 50, 0.4);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .chart-container {
+            height: 350px;
+            min-height: 350px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .stat-card {
+            height: 150px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            min-height: 300px;
+        }
+        
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .rankings-container {
+            overflow-x: auto;
+        }
+    }
+    
+    /* Animation for data loading */
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .fade-in-1 { animation-delay: 0.1s; }
+    .fade-in-2 { animation-delay: 0.2s; }
+    .fade-in-3 { animation-delay: 0.3s; }
+    .fade-in-4 { animation-delay: 0.4s; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container stats-container">
-    <div class="stats-header">
-        <h2>考勤统计</h2>
-        {# 可以添加对当前月份的显示 #}
+    <div class="page-header">
+        <h2>考勤统计概览</h2>
+        <p>查看您的出勤数据，帮助您更好地了解工作表现</p>
     </div>
 
-    {# 月份选择表单 #}
+    {# 月份选择表单 - 更现代的过滤面板 #}
     <div class="row">
         <div class="col-md-12">
-            <div class="form-container">
-                <form method="GET" action="{{ url_for('attendance.attendance_statistics') }}"> {# 修改为 GET 请求，重新加载页面 #}
-                    <div class="form-group mb-3"> {# 使用 bootstrap 间距 #}
-                        <label for="month">选择月份</label>
-                        <input type="month" class="form-control" id="month" name="month" value="{{ request.args.get('month', '') }}"> {# 保留已选月份 #}
+            <div class="filter-panel">
+                <h5 class="filter-title"><i class="fas fa-filter"></i> 数据筛选</h5>
+                <form method="GET" action="{{ url_for('attendance.attendance_statistics') }}" class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label for="month" class="form-label">选择月份</label>
+                        <input type="month" class="form-control" id="month" name="month" value="{{ request.args.get('month', '') }}">
                     </div>
-                    <button type="submit" class="btn btn-primary">查询</button>
+                    <div class="col-md-4">
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 查询
+                            </button>
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download"></i> 导出数据
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('export_attendance_statistics', format='csv', month=request.args.get('month', '')) }}">
+                                        <i class="fas fa-file-csv"></i> 导出CSV
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('export_attendance_statistics', format='excel', month=request.args.get('month', '')) }}">
+                                        <i class="fas fa-file-excel"></i> 导出Excel
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
-    {# 统计卡片，直接使用后端变量 #}
+    {# 统计卡片，使用现代卡片样式和图标 #}
     <div class="row mt-4">
         <div class="col-md-12">
-            <div class="statistics-container">
-                <div class="row">
-                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
-                        <div class="stat-card">
-                            <h4>总天数</h4>
-                            <p>{{ total_days }}</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
-                        <div class="stat-card">
-                            <h4>正常天数</h4>
-                            <p>{{ normal_days }}</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
-                        <div class="stat-card">
-                            <h4>迟到天数</h4>
-                            <p>{{ late_days }}</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3"> {# 添加下边距 #}
-                        <div class="stat-card">
-                            <h4>早退天数</h4>
-                            <p>{{ early_leave_days }}</p>
-                        </div>
-                    </div>
+            <div class="stats-cards">
+                <div class="stat-card fade-in fade-in-1">
+                    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                    <h4 class="stat-title">总出勤天数</h4>
+                    <div class="stat-value">{{ total_days }}</div>
+                    <div class="stat-subtitle">{{ selected_month }}</div>
+                </div>
+                <div class="stat-card fade-in fade-in-2">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <h4 class="stat-title">正常出勤天数</h4>
+                    <div class="stat-value">{{ normal_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (normal_days / total_days * 100)|round|int if total_days else 0 }}%</div>
+                </div>
+                <div class="stat-card fade-in fade-in-3">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <h4 class="stat-title">迟到天数</h4>
+                    <div class="stat-value">{{ late_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (late_days / total_days * 100)|round|int if total_days else 0 }}%</div>
+                </div>
+                <div class="stat-card fade-in fade-in-4">
+                    <div class="stat-icon"><i class="fas fa-sign-out-alt"></i></div>
+                    <h4 class="stat-title">早退天数</h4>
+                    <div class="stat-value">{{ early_leave_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (early_leave_days / total_days * 100)|round|int if total_days else 0 }}%</div>
                 </div>
             </div>
         </div>
     </div>
 
-    {# --- 这里添加图表和表格 --- #}
+    {# 图表部分 - 更好的布局和样式 #}
     <div class="row mt-4">
         {# 每日出勤趋势图 #}
-        <div class="col-md-8 mb-4">
+        <div class="col-lg-8 mb-4">
             <div class="chart-container">
-                <h4 class="chart-title">每日出勤人数趋势 ({{ selected_month }})</h4>
-                <canvas id="attendanceTrendChart"></canvas>
+                <div class="chart-header">
+                    <h5 class="chart-title"><i class="fas fa-chart-line"></i> 每日出勤人数趋势</h5>
+                    <span class="badge bg-primary">{{ selected_month }}</span>
+                </div>
+                <canvas id="attendanceTrendChart" height="300"></canvas>
             </div>
         </div>
 
-        {# 情绪统计 (改为扇形图) #}
-        <div class="col-md-4 mb-4">
-            <div class="pie-chart-container">
-                <h4 class="chart-title">情绪统计</h4>
+        {# 情绪统计扇形图 #}
+        <div class="col-lg-4 mb-4">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title"><i class="fas fa-smile"></i> 情绪统计分析</h5>
+                </div>
                 {% if emotion_stats %}
-                    <canvas id="emotionPieChart"></canvas>
+                    <canvas id="emotionPieChart" height="300"></canvas>
                 {% else %}
-                    <p class="text-muted">暂无情绪数据</p>
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4">
+                        <i class="fas fa-info-circle text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">暂无情绪数据</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    {# 用户出勤排名 (仅管理员可见) #}
+    {# 用户出勤排名 (仅管理员可见) - 更现代的表格样式 #}
     {% if is_admin and user_rankings %}
     <div class="row mt-4">
         <div class="col-md-12">
-            <div class="user-rankings">
-                <h4>用户出勤排名 ({{ selected_month }})</h4>
-                <table class="ranking-table mt-3">
-                    <thead>
-                        <tr>
-                            <th>排名</th>
-                            <th>姓名</th>
-                            <th>出勤天数</th>
-                            <th>正常天数</th>
-                            <th>迟到天数</th>
-                            <th>早退/未签退天数</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in user_rankings %}
-                        <tr>
-                            <td class="rank">{{ loop.index }}</td>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.attendance_days or 0 }}</td>
-                            <td>{{ user.normal_days or 0 }}</td>
-                            <td>{{ user.late_days or 0 }}</td>
-                            <td>{{ user.early_leave_days or 0 }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="rankings-container">
+                <div class="rankings-header">
+                    <h5 class="rankings-title"><i class="fas fa-trophy"></i> 用户出勤排名</h5>
+                    <span class="badge bg-primary">{{ selected_month }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th width="80">排名</th>
+                                <th>姓名</th>
+                                <th>出勤天数</th>
+                                <th>正常天数</th>
+                                <th>迟到天数</th>
+                                <th>早退/未签退天数</th>
+                                <th>出勤率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in user_rankings %}
+                            <tr>
+                                <td class="rank">
+                                    {% if loop.index == 1 %}
+                                        <div class="medal-1">1</div>
+                                    {% elif loop.index == 2 %}
+                                        <div class="medal-2">2</div>
+                                    {% elif loop.index == 3 %}
+                                        <div class="medal-3">3</div>
+                                    {% else %}
+                                        {{ loop.index }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.attendance_days or 0 }}</td>
+                                <td>{{ user.normal_days or 0 }}</td>
+                                <td>{{ user.late_days or 0 }}</td>
+                                <td>{{ user.early_leave_days or 0 }}</td>
+                                <td>
+                                    {% set attendance_rate = (user.normal_days / total_days * 100)|round|int if total_days else 0 %}
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary attendance-bar" data-value="{{ attendance_rate }}" role="progressbar" aria-valuenow="{{ attendance_rate }}" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <span class="small mt-1 d-block">{{ attendance_rate }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
     {% endif %}
-    {# --- 图表和表格结束 --- #}
-
 </div>
 {% endblock %}
 
 {% block scripts %}
-{# 引入 Chart.js (如果 base.html 没有引入，需要在这里引入) #}
-{# <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 每日出勤趋势图
+    // 每日出勤趋势图 - 改进图表样式
     const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
     const dates = JSON.parse('{{ dates|tojson|safe }}');
     const attendanceData = JSON.parse('{{ attendance_data|tojson|safe }}');
 
     // 检查数据是否有效
     if (Array.isArray(dates) && Array.isArray(attendanceData)) {
+        // 创建渐变背景
+        let gradient = trendCtx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(67, 97, 238, 0.3)');
+        gradient.addColorStop(1, 'rgba(67, 97, 238, 0.05)');
+        
         new Chart(trendCtx, {
             type: 'line',
             data: {
@@ -435,97 +632,158 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: '出勤人数',
                     data: attendanceData,
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    tension: 0.1,
+                    borderColor: '#4361ee',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#4361ee',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.3,
                     fill: true
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // 允许图表高度调整
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1 // 确保Y轴刻度为整数
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // 情绪统计扇形图
-    const emotionCtx = document.getElementById('emotionPieChart')?.getContext('2d');
-    const emotionStats = JSON.parse('{{ emotion_stats|tojson|safe }}');
-    if (emotionCtx && emotionStats && Object.keys(emotionStats).length > 0) {
-        const emotionLabels = Object.keys(emotionStats);
-        const emotionCounts = Object.values(emotionStats);
-        
-        // 创建情绪到颜色的映射
-        const emotionColorMap = {
-            '开心': 'rgba(255, 206, 86, 0.7)', // 黄色
-            '平静': 'rgba(54, 162, 235, 0.7)', // 蓝色
-            '难过': 'rgba(108, 117, 125, 0.7)', // 灰色
-            '惊讶': 'rgba(153, 102, 255, 0.7)',// 紫色
-            '生气': 'rgba(255, 99, 132, 0.7)',  // 红色
-            '恐惧': 'rgba(75, 192, 192, 0.7)', // 青色 (假设有)
-            '厌恶': 'rgba(255, 159, 64, 0.7)', // 橙色 (假设有)
-            // 可以为其他可能的情绪添加默认颜色
-            'default': 'rgba(199, 199, 199, 0.7)' // 灰色
-        };
-
-        // 根据标签从映射中获取颜色
-        const backgroundColors = emotionLabels.map(label => emotionColorMap[label] || emotionColorMap['default']);
-
-        new Chart(emotionCtx, {
-            type: 'pie',
-            data: {
-                labels: emotionLabels,
-                datasets: [{
-                    label: '情绪次数',
-                    data: emotionCounts,
-                    backgroundColor: backgroundColors, // 使用映射后的颜色
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'top',
+                        display: false
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#293241',
+                        bodyColor: '#293241',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        caretPadding: 10,
+                        cornerRadius: 8,
+                        displayColors: false,
                         callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
                             label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += context.parsed + '次';
-                                }
-                                return label;
+                                return `出勤人数: ${context.parsed.y} 人`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#8d99ae'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            color: '#8d99ae',
+                            callback: function(value) {
+                                return value + ' 人';
                             }
                         }
                     }
                 }
             }
         });
-    } else if (emotionCtx) {
-        // 如果有 canvas 但没数据，可以显示提示信息
-        // emotionCtx.font = "16px Arial";
-        // emotionCtx.fillStyle = "#ccc";
-        // emotionCtx.textAlign = "center";
-        // emotionCtx.fillText("暂无情绪数据", emotionCtx.canvas.width / 2, emotionCtx.canvas.height / 2);
     }
 
-    // 月份选择器的默认值 (如果后端传递了)
+    // 情绪统计扇形图 - 改进图表样式
+    const emotionCtx = document.getElementById('emotionPieChart')?.getContext('2d');
+    const emotionStats = JSON.parse('{{ emotion_stats|tojson|safe }}');
+    if (emotionCtx && emotionStats && Object.keys(emotionStats).length > 0) {
+        const emotionLabels = Object.keys(emotionStats);
+        const emotionCounts = Object.values(emotionStats);
+        
+        // 更现代的颜色映射
+        const emotionColorMap = {
+            '开心': 'rgba(72, 149, 239, 0.85)',  // 蓝色
+            '平静': 'rgba(76, 201, 240, 0.85)',  // 浅蓝色
+            '难过': 'rgba(141, 153, 174, 0.85)', // 灰色
+            '惊讶': 'rgba(153, 102, 255, 0.85)', // 紫色
+            '生气': 'rgba(255, 99, 132, 0.85)',  // 红色
+            '恐惧': 'rgba(255, 159, 64, 0.85)',  // 橙色
+            '厌恶': 'rgba(255, 206, 86, 0.85)',  // 黄色
+            'default': 'rgba(199, 199, 199, 0.85)' // 默认灰色
+        };
+
+        // 根据标签从映射中获取颜色
+        const backgroundColors = emotionLabels.map(label => emotionColorMap[label] || emotionColorMap['default']);
+        const hoverColors = backgroundColors.map(color => color.replace('0.85', '1'));
+
+        new Chart(emotionCtx, {
+            type: 'doughnut', // 使用环形图而不是饼图
+            data: {
+                labels: emotionLabels,
+                datasets: [{
+                    label: '情绪次数',
+                    data: emotionCounts,
+                    backgroundColor: backgroundColors,
+                    hoverBackgroundColor: hoverColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%', // 设置环形图的内圆大小
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#293241',
+                        bodyColor: '#293241',
+                        borderColor: '#e9ecef',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((context.parsed / total) * 100);
+                                return `${context.label}: ${context.parsed} 次 (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 月份选择器的默认值设置
     const selectedMonth = "{{ selected_month }}";
     if (selectedMonth) {
         document.getElementById('month').value = selectedMonth;
     }
+    
+    // 设置所有进度条宽度
+    document.querySelectorAll('.attendance-bar').forEach(bar => {
+        const value = bar.getAttribute('data-value');
+        if (value) {
+            bar.style.width = value + '%';
+        }
+    });
 });
 </script>
 {% endblock %} 

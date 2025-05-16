@@ -1,0 +1,15 @@
+{
+    "timestamp": "20250516_134932",
+    "test_dataset": "data/test_faces",
+    "known_faces_count": 14,
+    "test_time": 11.363508462905884,
+    "best_threshold": 0.33684210526315794,
+    "best_metrics": {
+        "accuracy": 0.8571428571428571,
+        "precision": 1.0,
+        "recall": 0.8181818181818182,
+        "f1_score": 0.9,
+        "frr": 0.18181818181818182,
+        "far": 0.0
+    }
+}

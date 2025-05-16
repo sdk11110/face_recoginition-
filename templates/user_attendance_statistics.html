@@ -1,0 +1,563 @@
+{% extends "tech_layout.html" %}
+
+{% block title %}个人考勤统计 - 人脸识别考勤系统{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-light: #4895ef;
+        --success: #4cc9f0;
+        --warning: #f77f00;
+        --danger: #d62828;
+        --dark: #293241;
+        --light: #f8f9fa;
+        --light-gray: #edf2f4;
+        --gray: #8d99ae;
+        --white: #ffffff;
+        --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+        --card-radius: 0.75rem;
+    }
+
+    /* 页面头部样式 */
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .page-header:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--primary-light));
+        border-radius: 2px;
+    }
+
+    .page-header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--white);
+    }
+
+    .page-header p {
+        color: var(--light-gray);
+        font-size: 1.1rem;
+    }
+
+    /* 数据筛选面板 */
+    .filter-panel {
+        background: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(74, 111, 255, 0.2);
+    }
+
+    .filter-panel:hover {
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+    }
+
+    .filter-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--white);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-title i {
+        color: var(--primary-light);
+    }
+
+    input[type="month"] {
+        background-color: rgba(20, 30, 50, 0.7);
+        border: 1px solid rgba(74, 111, 255, 0.3);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        color: var(--white);
+    }
+
+    input[type="month"]:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+        outline: none;
+    }
+
+    .btn-search {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-search:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-export {
+        background: linear-gradient(135deg, var(--success), #27c2d9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-export:hover {
+        background: linear-gradient(135deg, #27c2d9, var(--success));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(76, 201, 240, 0.4);
+    }
+
+    /* 统计卡片样式 */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px solid rgba(74, 111, 255, 0.2);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+        border-color: rgba(74, 111, 255, 0.4);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.2;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--primary-light);
+    }
+
+    .stat-title {
+        font-size: 1rem;
+        color: var(--light-gray);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: var(--white);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-subtitle {
+        font-size: 0.9rem;
+        color: var(--gray);
+    }
+
+    /* 图表容器样式 */
+    .chart-container {
+        background: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        min-height: 400px;
+        height: 400px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(74, 111, 255, 0.2);
+    }
+
+    .chart-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+        border-color: rgba(74, 111, 255, 0.4);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-title i {
+        color: var(--primary-light);
+        font-size: 1.1rem;
+    }
+
+    /* 响应式布局调整 */
+    @media (max-width: 992px) {
+        .stats-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .chart-container {
+            height: 350px;
+            min-height: 350px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .stat-card {
+            height: 150px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            min-height: 300px;
+        }
+    }
+    
+    /* 动画效果 */
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .fade-in-1 { animation-delay: 0.1s; }
+    .fade-in-2 { animation-delay: 0.2s; }
+    .fade-in-3 { animation-delay: 0.3s; }
+    .fade-in-4 { animation-delay: 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h2>考勤统计概览</h2>
+        <p>查看您的出勤数据，帮助您更好地了解工作表现</p>
+    </div>
+
+    <!-- 月份选择表单 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="filter-panel">
+                <h5 class="filter-title"><i class="fas fa-filter"></i> 数据筛选</h5>
+                <form method="GET" action="{{ url_for('user.attendance_statistics') }}" class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label for="month" class="form-label text-light">选择月份</label>
+                        <input type="month" class="form-control" id="month" name="month" value="{{ selected_month_value }}">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-search">
+                                <i class="fas fa-search"></i> 查询
+                            </button>
+                            <a href="{{ url_for('user.export_attendance', month=selected_month_value) }}" class="btn btn-export">
+                                <i class="fas fa-download"></i> 导出数据
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="stats-cards">
+                <div class="stat-card fade-in fade-in-1">
+                    <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                    <h4 class="stat-title">总出勤天数</h4>
+                    <div class="stat-value">{{ total_days }}</div>
+                    <div class="stat-subtitle">{{ selected_month }}</div>
+                </div>
+                <div class="stat-card fade-in fade-in-2">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <h4 class="stat-title">正常出勤天数</h4>
+                    <div class="stat-value">{{ normal_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (normal_days / total_days * 100)|round|int if total_days else 0 }}%</div>
+                </div>
+                <div class="stat-card fade-in fade-in-3">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <h4 class="stat-title">迟到天数</h4>
+                    <div class="stat-value">{{ late_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (late_days / total_days * 100)|round|int if total_days else 0 }}%</div>
+                </div>
+                <div class="stat-card fade-in fade-in-4">
+                    <div class="stat-icon"><i class="fas fa-sign-out-alt"></i></div>
+                    <h4 class="stat-title">早退天数</h4>
+                    <div class="stat-value">{{ early_days }}</div>
+                    <div class="stat-subtitle">占比 {{ (early_days / total_days * 100)|round|int if total_days else 0 }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表部分 -->
+    <div class="row mt-4">
+        <!-- 每日出勤趋势图 -->
+        <div class="col-lg-8 mb-4">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title"><i class="fas fa-chart-line"></i> 每日出勤趋势</h5>
+                    <span class="badge bg-primary">{{ selected_month }}</span>
+                </div>
+                <canvas id="attendanceTrendChart" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 情绪统计扇形图 -->
+        <div class="col-lg-4 mb-4">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h5 class="chart-title"><i class="fas fa-smile"></i> 情绪统计分析</h5>
+                </div>
+                {% if emotion_stats %}
+                    <canvas id="emotionPieChart" height="300"></canvas>
+                {% else %}
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center p-4">
+                        <i class="fas fa-info-circle text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">暂无情绪数据</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 每日出勤趋势图
+    const trendCtx = document.getElementById('attendanceTrendChart').getContext('2d');
+    const dates = JSON.parse('{{ dates|tojson|safe }}');
+    const attendanceData = JSON.parse('{{ attendance_data|tojson|safe }}');
+
+    // 检查数据是否有效
+    if (Array.isArray(dates) && Array.isArray(attendanceData)) {
+        // 创建渐变背景
+        let gradient = trendCtx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(74, 111, 255, 0.3)');
+        gradient.addColorStop(1, 'rgba(74, 111, 255, 0.05)');
+        
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: '出勤状态',
+                    data: attendanceData,
+                    borderColor: '#4a6fff',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#4a6fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 30, 60, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(74, 111, 255, 0.3)',
+                        borderWidth: 1,
+                        caretPadding: 10,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                let status = '';
+                                if (value === 1) status = '正常出勤';
+                                else if (value === 0.5) status = '迟到或早退';
+                                else if (value === 0) status = '未出勤';
+                                return `状态: ${status}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#8a9baf'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 1,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            stepSize: 0.5,
+                            color: '#8a9baf',
+                            callback: function(value) {
+                                if (value === 0) return '未出勤';
+                                if (value === 0.5) return '迟到/早退';
+                                if (value === 1) return '正常';
+                                return '';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 情绪统计扇形图
+    const emotionCtx = document.getElementById('emotionPieChart')?.getContext('2d');
+    const emotionStats = JSON.parse('{{ emotion_stats|tojson|safe }}');
+    if (emotionCtx && emotionStats && Object.keys(emotionStats).length > 0) {
+        const emotionLabels = Object.keys(emotionStats);
+        const emotionCounts = Object.values(emotionStats);
+        
+        // 更现代的颜色映射
+        const emotionColorMap = {
+            '开心': 'rgba(72, 149, 239, 0.85)',  // 蓝色
+            '平静': 'rgba(76, 201, 240, 0.85)',  // 浅蓝色
+            '难过': 'rgba(141, 153, 174, 0.85)', // 灰色
+            '惊讶': 'rgba(153, 102, 255, 0.85)', // 紫色
+            '生气': 'rgba(255, 99, 132, 0.85)',  // 红色
+            '恐惧': 'rgba(255, 159, 64, 0.85)',  // 橙色
+            '厌恶': 'rgba(255, 206, 86, 0.85)',  // 黄色
+            'default': 'rgba(199, 199, 199, 0.85)' // 默认灰色
+        };
+
+        // 根据标签从映射中获取颜色
+        const backgroundColors = emotionLabels.map(label => emotionColorMap[label] || emotionColorMap['default']);
+        const hoverColors = backgroundColors.map(color => color.replace('0.85', '1'));
+
+        new Chart(emotionCtx, {
+            type: 'doughnut', // 使用环形图而不是饼图
+            data: {
+                labels: emotionLabels,
+                datasets: [{
+                    label: '情绪次数',
+                    data: emotionCounts,
+                    backgroundColor: backgroundColors,
+                    hoverBackgroundColor: hoverColors,
+                    borderWidth: 2,
+                    borderColor: 'rgba(20, 30, 60, 0.8)',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%', // 设置环形图的内圆大小
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15,
+                            color: '#ffffff',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(20, 30, 60, 0.9)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: 'rgba(74, 111, 255, 0.3)',
+                        borderWidth: 1,
+                        caretPadding: 10,
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 初始化所有进度条动画
+    document.querySelectorAll('.attendance-bar').forEach(bar => {
+        const value = parseInt(bar.getAttribute('data-value'));
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = value + '%';
+            bar.style.transition = 'width 1s ease';
+        }, 300);
+    });
+});
+</script>
+{% endblock %} 

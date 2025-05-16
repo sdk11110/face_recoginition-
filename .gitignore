@@ -1,0 +1,25 @@
+# 排除模型文件
+data/model/
+*.h5
+*.weights
+*.pb
+*.pt
+*.pth
+*.model
+*.pkl
+
+# 排除环境和缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+*.log
+
+# 排除系统文件
+.DS_Store
+Thumbs.db 

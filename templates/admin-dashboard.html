@@ -5,14 +5,21 @@
 {% block styles %}
 <style>
     :root {
-        --primary-color: #4361ee;
+        --primary-color: #4a6fff;
+        --secondary-color: #1a2b4a;
+        --accent-color: #00c7b1;
+        --bg-dark: #000823;
+        --bg-medium: #0c123d;
+        --bg-light: #172254;
+        --text-light: #ffffff;
+        --text-muted: #8a9baf;
+        --border-color: #2a3b5a;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         --primary-light: #4895ef;
         --primary-dark: #3f37c9;
-        --secondary-color: #4cc9f0;
-        --success-color: #2ecc71;
-        --warning-color: #f39c12;
-        --danger-color: #e74c3c;
-        --info-color: #3498db;
         --gray-100: #f8f9fa;
         --gray-200: #e9ecef;
         --gray-300: #dee2e6;
@@ -28,11 +35,22 @@
 
     body {
         font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
-        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        background: var(--bg-dark);
         min-height: 100vh;
         margin: 0;
         padding-left: 250px;
         transition: var(--transition);
+        color: var(--text-light);
+    }
+
+    /* 3D背景容器 */
+    .bg-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
     }
 
     /* 侧边栏样式 */
@@ -42,13 +60,16 @@
         position: fixed;
         top: 0;
         left: 0;
-        background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-800) 100%);
+        background: rgba(20, 30, 60, 0.85);
         color: white;
         z-index: 1000;
         transition: var(--transition);
         box-shadow: var(--card-shadow);
         display: flex;
         flex-direction: column;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(74, 111, 255, 0.2);
     }
 
     .sidebar-header {
@@ -169,11 +190,13 @@
         padding: 2rem;
         max-width: 1400px;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
     }
 
     /* 欢迎卡片 */
     .welcome-card {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        background: rgba(20, 30, 60, 0.8);
         border-radius: 1rem;
         padding: 2rem;
         color: white;
@@ -184,6 +207,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
     }
 
     .welcome-card::before {
@@ -257,12 +283,16 @@
     }
 
     .stats-card {
-        background: white;
+        background: rgba(20, 30, 60, 0.8);
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: var(--card-shadow);
         transition: var(--transition);
         border-top: 4px solid transparent;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
+        color: var(--text-light);
     }
 
     .stats-card:hover {
@@ -310,13 +340,13 @@
     .stats-number {
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--gray-900);
+        color: var(--text-light);
         margin-bottom: 0.25rem;
     }
 
     .stats-label {
         font-size: 0.9rem;
-        color: var(--gray-600);
+        color: var(--text-muted);
     }
 
     /* 数据展示区域 */
@@ -327,12 +357,15 @@
     }
 
     .recent-records, .chart-container {
-        background: white;
+        background: rgba(20, 30, 60, 0.8);
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: var(--card-shadow);
         transition: var(--transition);
         height: 100%;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
     }
 
     .recent-records:hover, .chart-container:hover {
@@ -353,17 +386,17 @@
     .section-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--gray-900);
+        color: var(--text-light);
         margin-bottom: 1.25rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid var(--gray-200);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .section-title i {
-        color: var(--primary-color);
+        color: var(--primary-light);
     }
 
     .record-list {
@@ -380,24 +413,25 @@
         transition: var(--transition);
         border: 1px solid transparent;
         margin-bottom: 0.5rem;
+        background: rgba(30, 40, 70, 0.5);
     }
 
     .record-item:hover {
-        background: var(--gray-100);
-        border-color: var(--gray-200);
+        background: rgba(40, 50, 80, 0.7);
+        border-color: rgba(74, 111, 255, 0.3);
         transform: translateX(5px);
     }
 
     .record-name {
         font-weight: 600;
-        color: var(--gray-800);
+        color: var(--text-light);
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .record-time {
-        color: var(--gray-600);
+        color: var(--text-muted);
         font-size: 0.9rem;
         display: flex;
         align-items: center;
@@ -406,7 +440,7 @@
 
     /* 考勤统计卡片 */
     .stats-widget {
-        background: white;
+        background: rgba(20, 30, 60, 0.8);
         border-radius: 1rem;
         padding: 1.5rem;
         box-shadow: var(--card-shadow);
@@ -416,6 +450,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
     }
 
     .stats-widget:hover {
@@ -436,7 +473,7 @@
     }
 
     .stats-widget p {
-        color: var(--gray-600);
+        color: var(--text-muted);
         margin-bottom: 1.5rem;
     }
 
@@ -461,7 +498,7 @@
     .empty-state {
         text-align: center;
         padding: 3rem;
-        color: var(--gray-500);
+        color: var(--text-muted);
     }
 
     .empty-state i {
@@ -524,27 +561,29 @@
     }
 
     .metric-item {
-        background: var(--gray-100);
+        background: rgba(30, 40, 70, 0.5);
         padding: 1rem;
         border-radius: 0.5rem;
         transition: var(--transition);
+        border: 1px solid rgba(74, 111, 255, 0.1);
     }
 
     .metric-item:hover {
-        background: var(--gray-200);
+        background: rgba(40, 50, 80, 0.7);
         transform: translateY(-2px);
+        border-color: rgba(74, 111, 255, 0.3);
     }
 
     .metric-label {
         font-size: 0.9rem;
-        color: var(--gray-600);
+        color: var(--text-muted);
         margin-bottom: 0.5rem;
     }
 
     .metric-value {
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--primary-light);
     }
 
     .test-controls {
@@ -587,7 +626,7 @@
 
     .metric-details {
         font-size: 0.8rem;
-        color: var(--gray-600);
+        color: var(--text-muted);
         margin-top: 0.25rem;
     }
 
@@ -616,10 +655,33 @@
         0% { transform: translateX(-100%); }
         100% { transform: translateX(100%); }
     }
+
+    /* 侧边栏导航分隔线和分组 */
+    .nav-divider {
+        height: 1px;
+        background-color: var(--border-color);
+        margin: 10px 15px;
+        opacity: 0.5;
+    }
+    
+    .nav-group {
+        margin-bottom: 10px;
+    }
+    
+    .nav-group-title {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        padding: 5px 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- 3D背景 -->
+<div id="bg-container" class="bg-container"></div>
+
 <!-- 左侧导航栏 -->
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -642,9 +704,21 @@
             <span>考勤管理</span>
         </a>
         <a href="{{ url_for('admin.face_management') }}" class="nav-item">
-            <i class="fas fa-users-cog"></i>
-            <span>用户管理</span>
+            <i class="fas fa-users-cog"></i> 用户管理
         </a>
+        <a href="{{ url_for('admin.users_management') }}" class="nav-item">
+            <i class="fas fa-user"></i> 账号管理
+        </a>
+        <div class="nav-divider"></div>
+        <div class="nav-group">
+            <div class="nav-group-title">测试工具</div>
+            <a href="{{ url_for('performance_test_page') }}" class="nav-item">
+                <i class="fas fa-tachometer-alt"></i> 性能测试
+            </a>
+            <a href="{{ url_for('random_image_test_page') }}" class="nav-item">
+                <i class="fas fa-image"></i> 随机图片测试
+            </a>
+        </div>
     </div>
     <div class="user-info">
         <div class="user-avatar">
@@ -676,7 +750,7 @@
                 <i class="fas fa-search"></i> 查询考勤
             </a>
             <a href="{{ url_for('admin.face_management') }}" class="btn btn-light">
-                <i class="fas fa-users-cog"></i> 人脸管理
+                <i class="fas fa-user-circle"></i> 人脸管理
             </a>
         </div>
     </div>
@@ -751,9 +825,9 @@
                     </div>
                 </div>
                 <div class="test-controls" style="margin-top: 1rem;">
-                    <button class="btn btn-primary" id="startTestBtn" onclick="startPerformanceTest()">
-                        <i class="fas fa-play"></i> 开始性能测试
-                    </button>
+                    <a href="{{ url_for('performance_test_page') }}" class="btn btn-primary">
+                        <i class="fas fa-play"></i> 前往性能测试页面
+                    </a>
                 </div>
             </div>
 
@@ -764,9 +838,9 @@
                     <div class="section-title">
                         <i class="fas fa-history"></i>最近打卡记录
                     </div>
-                    {% if recent_records and recent_records|length > 0 %}
+                    {% if recent_attendance and recent_attendance|length > 0 %}
                         <div class="record-list">
-                        {% for record in recent_records %}
+                        {% for record in recent_attendance %}
                             <div class="record-item">
                                 <div class="record-name">
                                     <i class="fas fa-user"></i>{{ record[0] }}
@@ -811,9 +885,25 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- 引入Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/3d-background.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // 初始化3D背景
+    const background = new TechBackground('bg-container', {
+        particleCount: 800,
+        particleColor: 0x4a6fff,
+        lineColor: 0x4a6fff,
+        backgroundColor: 0x000823,
+        particleSize: 0.6,
+        lineOpacity: 0.2,
+        gridSize: 150,
+        gridDivisions: 20,
+        autoAdjust: true
+    });
+
     // 获取本周日期标签
     const today = new Date();
     const monday = new Date(today);
@@ -871,10 +961,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         stepSize: 1,
                         font: {
                             size: 12
-                        }
+                        },
+                        color: 'rgba(255, 255, 255, 0.8)'
                     },
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
+                        color: 'rgba(255, 255, 255, 0.1)'
                     }
                 },
                 x: {
@@ -884,7 +975,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     ticks: {
                         font: {
                             size: 12
-                        }
+                        },
+                        color: 'rgba(255, 255, 255, 0.8)'
                     }
                 }
             }
