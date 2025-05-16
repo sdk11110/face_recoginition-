@@ -65,6 +65,21 @@
 
 ![随机图片测试](data/image/image_test_page.png)
 
+## 模型下载
+
+由于GitHub对文件大小的限制，本项目的模型文件需要单独下载：
+
+- **dlib人脸识别模型**：
+  - 百度网盘链接：[待补充]
+  - 提取码：[待补充]
+- **情绪识别模型**：
+  - 百度网盘链接：[待补充]
+  - 提取码：[待补充]
+
+下载完成后，请将模型文件放置在项目的对应目录中：
+- dlib模型文件放置在 `data/data_dlib/` 目录
+- 情绪识别模型放置在 `FER2013_VGG19/` 目录
+
 ## 安装步骤
 
 1. 克隆项目到本地：
@@ -77,8 +92,7 @@
    pip install -r requirements.txt
    ```
 
-3. 下载dlib模型文件并放置到正确位置：
-   从 https://drive.google.com/drive/folders/12It2jeNQOxwStBxtagL1vvIJokoz-DL4?usp=sharing 下载模型文件，并将data文件夹放置在项目根目录下。
+3. 下载模型文件并放置到正确位置（见上方"模型下载"部分）
 
 4. 配置MySQL数据库：
    - 创建数据库：`attendance_db`
