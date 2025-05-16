@@ -20,8 +20,8 @@ class FaceRecognizer:
     def __init__(self):
         if not self._initialized:
             self.detector = dlib.get_frontal_face_detector()
-            self.shape_predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
-            self.face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
+            self.shape_predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
+            self.face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
             self._initialized = True
 
     def detect_faces(self, frame):

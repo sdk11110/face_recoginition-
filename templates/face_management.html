@@ -438,8 +438,8 @@
                 <tr>
                     <td>{{ user.username }}</td>
                     <td>{{ user.name }}</td>
-                    <td>{{ user.join_date.strftime('%Y-%m-%d %H:%M:%S') if user.join_date else '未知' }}</td>
-                    <td>{{ user.attendance_count }}</td>
+                    <td>{{ user.created_at|date_format if user.created_at else '未知' }}</td>
+                    <td>{{ user.attendance_count or 0 }}</td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-primary btn-sm" onclick="registerFace('{{ user.username }}', '{{ user.id }}', '{{ user.name }}')">
@@ -477,7 +477,7 @@
                 <h5 class="modal-title">添加新用户</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addUserForm">
+            <form id="addUserForm" action="{{ url_for('admin.add_user') }}" method="POST">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="username" class="form-label">用户名</label>
@@ -676,8 +676,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        fetch(`/delete_face/${username}`, {
-            method: 'POST'
+        fetch(`/admin/delete_user/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .then(response => response.json())
         .then(data => {
@@ -753,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
         this.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> 处理中...';
         
-        fetch(`/delete_user/${currentUserId}`, {
+        fetch(`/admin/delete_user/${currentUserId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -791,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData(this);
         
-        fetch('/add_user', {
+        fetch('/admin/add_user', {
             method: 'POST',
             body: formData
         })
@@ -979,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
 
         // 发送请求
-        fetch('/register_face', {
+        fetch('/admin/register_face', {
             method: 'POST',
             body: formData
         })

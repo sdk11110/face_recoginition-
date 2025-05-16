@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "tech_layout.html" %}
 
 {% block title %}用户仪表板 - 人脸识别考勤系统{% endblock %}
 
@@ -13,17 +13,16 @@
         --warning-color: #f39c12;
         --danger-color: #e74c3c;
         --info-color: #3498db;
-        --card-bg: white;
-        --text-color: #333;
-        --text-light: #7f8c8d;
+        --card-bg: rgba(20, 30, 60, 0.8);
+        --text-color: #ffffff;
+        --text-light: #8a9baf;
         --border-radius: 12px;
-        --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
     }
-
-    body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e2e8f0 100%);
-        font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
-        min-height: 100vh;
+    
+    /* 为兼容深色背景添加样式 */
+    .attendance-card, .stats-widget {
+        background-color: rgba(20, 30, 60, 0.8);
     }
 
     /* 仪表板布局 */
@@ -38,11 +37,14 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background-color: var(--card-bg);
+        background-color: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border-radius: var(--border-radius);
         padding: 20px 30px;
         margin-bottom: 30px;
         box-shadow: var(--box-shadow);
+        border: 1px solid rgba(74, 111, 255, 0.2);
     }
 
     .logo {
@@ -195,7 +197,10 @@
     }
 
     .stats-card {
-        background-color: var(--card-bg);
+        background-color: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
         border-radius: var(--border-radius);
         padding: 25px;
         box-shadow: var(--box-shadow);
@@ -260,7 +265,10 @@
 
     /* 考勤卡片 */
     .attendance-card {
-        background-color: var(--card-bg);
+        background-color: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
         border-radius: var(--border-radius);
         padding: 25px;
         box-shadow: var(--box-shadow);
@@ -278,7 +286,7 @@
         align-items: center;
         margin-bottom: 25px;
         padding-bottom: 15px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .attendance-title {
@@ -319,12 +327,12 @@
         justify-content: space-between;
         align-items: center;
         padding: 18px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
     }
 
     .attendance-item:hover {
-        background-color: rgba(245, 247, 250, 0.7);
+        background-color: rgba(255, 255, 255, 0.05);
         border-radius: 8px;
         transform: translateX(5px);
     }
@@ -347,7 +355,7 @@
     }
 
     .attendance-time {
-        background-color: rgba(67, 97, 238, 0.1);
+        background-color: rgba(67, 97, 238, 0.2);
         color: var(--primary-color);
         padding: 8px 15px;
         border-radius: 8px;
@@ -357,7 +365,10 @@
 
     /* 考勤统计卡片 */
     .stats-widget {
-        background-color: var(--card-bg);
+        background-color: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
         border-radius: var(--border-radius);
         padding: 25px;
         box-shadow: var(--box-shadow);
@@ -417,7 +428,10 @@
 
     /* 导出卡片 */
     .export-widget {
-        background-color: var(--card-bg);
+        background-color: rgba(20, 30, 60, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 111, 255, 0.2);
         border-radius: var(--border-radius);
         padding: 25px;
         box-shadow: var(--box-shadow);
@@ -513,7 +527,7 @@
     .empty-state i {
         font-size: 60px;
         margin-bottom: 20px;
-        color: rgba(0, 0, 0, 0.1);
+        color: rgba(255, 255, 255, 0.1);
     }
 
     .empty-state p {
@@ -529,7 +543,7 @@
     .alert-warning {
         background-color: rgba(243, 156, 18, 0.2);
         border-left: 5px solid var(--warning-color);
-        color: #9a5d00;
+        color: #f7d9a1;
     }
 
     /* 响应式设计 */
@@ -596,7 +610,7 @@
             <div class="user-avatar">
                 <i class="fas fa-user"></i>
             </div>
-            <a href="{{ url_for('logout') }}" class="logout-btn">
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
                 <i class="fas fa-sign-out-alt"></i>
                 退出登录
             </a>
@@ -708,7 +722,7 @@
                 <i class="fas fa-chart-pie"></i>
                 <h3>我的考勤统计</h3>
                 <p>查看个人考勤统计和分析</p>
-                <a href="{{ url_for('attendance_statistics') }}" class="stats-btn">
+                <a href="{{ url_for('user.attendance_statistics') }}" class="stats-btn">
                     <i class="fas fa-chart-line"></i> 查看统计
                 </a>
             </div>
@@ -720,7 +734,7 @@
                 </div>
                 <div class="export-title">导出考勤记录</div>
                 <div class="export-desc">下载个人考勤记录报表</div>
-                <a href="{{ url_for('attendance_query') }}" class="export-btn">
+                <a href="{{ url_for('attendance_query_page_route') }}" class="export-btn">
                     <i class="fas fa-download"></i> 导出记录
                 </a>
             </div>

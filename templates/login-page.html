@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 人脸识别考勤系统{% endblock %}
+
+{% set hide_nav = true %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary-color: #4a6fff;
+        --primary-dark: #3a5eee;
+        --secondary-color: #ff6b6b;
+        --text-color: #333;
+        --light-gray: #f5f8fa;
+        --border-radius: 12px;
+        --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: var(--text-color);
+        padding: 20px;
+    }
+    
+    .login-container {
+        max-width: 900px;
+        display: flex;
+        overflow: hidden;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        background-color: white;
+    }
+    
+    .login-image {
+        flex: 1;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        padding: 40px;
+        position: relative;
+    }
+    
+    .login-image::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("{{ url_for('static', filename='images/face-scan.svg') }}") no-repeat center;
+        background-size: 70%;
+        opacity: 0.2;
+    }
+    
+    .login-image h1 {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 2;
+        font-weight: 700;
+    }
+    
+    .login-image p {
+        font-size: 1.1rem;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        line-height: 1.6;
+    }
+    
+    .login-form {
+        flex: 1;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .login-form h2 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #555;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: var(--border-radius);
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 111, 255, 0.2);
+        outline: none;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border: none;
+        padding: 14px;
+        border-radius: var(--border-radius);
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    .error-message {
+        color: var(--secondary-color);
+        font-size: 14px;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .system-error {
+        color: var(--secondary-color);
+        font-size: 14px;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: rgba(255, 107, 107, 0.1);
+        border: 1px solid rgba(255, 107, 107, 0.3);
+        display: none;
+    }
+    
+    .system-name {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #777;
+    }
+    
+    @media (max-width: 768px) {
+        .login-container {
+            flex-direction: column;
+            max-width: 100%;
+        }
+        
+        .login-image {
+            padding: 30px 20px;
+        }
+        
+        .login-form {
+            padding: 30px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-image">
+        <h1>人脸识别考勤系统</h1>
+        <p>现代化的考勤解决方案，通过面部识别技术提供安全便捷的签到体验</p>
+    </div>
+    <div class="login-form">
+        <h2>欢迎登录</h2>
+        <form id="loginForm" method="POST" action="/login">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+                <div class="error-message" id="username-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+                <div class="error-message" id="password-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">选择角色</label>
+                <select class="form-control" id="role" name="role" required>
+                    <option value="" disabled selected>-- 请选择 --</option>
+                    <option value="user">学生</option>
+                    <option value="admin">管理员</option>
+                </select>
+                <div class="error-message" id="role-error"></div>
+            </div>
+            
+            <button type="submit" class="btn-primary">登录</button>
+            <div class="system-error" id="system-error"></div>
+        </form>
+        
+        <p class="system-name">© 2025 人脸识别考勤系统</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        // 清除之前的错误信息
+        document.querySelectorAll('.error-message, .system-error').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        let hasError = false;
+        
+        // 验证用户名
+        const username = document.getElementById('username').value.trim();
+        if (!username) {
+            document.getElementById('username-error').textContent = '请输入用户名';
+            document.getElementById('username-error').style.display = 'block';
+            hasError = true;
+        }
+        
+        // 验证密码
+        const password = document.getElementById('password').value.trim();
+        if (!password) {
+            document.getElementById('password-error').textContent = '请输入密码';
+            document.getElementById('password-error').style.display = 'block';
+            hasError = true;
+        }
+        
+        // 验证角色选择
+        const role = document.getElementById('role').value;
+        if (!role) {
+            document.getElementById('role-error').textContent = '请选择角色';
+            document.getElementById('role-error').style.display = 'block';
+            hasError = true;
+        }
+        
+        if (hasError) {
+            return;
+        }
+        
+        // 使用AJAX提交表单
+        const formData = new FormData(this);
+        
+        fetch('/login', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || '登录失败');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = data.redirect;
+            } else {
+                const errorElement = document.getElementById('system-error');
+                errorElement.textContent = data.message || '登录失败，请稍后重试';
+                errorElement.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            const errorElement = document.getElementById('system-error');
+            errorElement.textContent = error.message || '登录失败，请稍后重试';
+            errorElement.style.display = 'block';
+        });
+    });
+</script>
+{% endblock %}

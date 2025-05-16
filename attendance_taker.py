@@ -21,10 +21,10 @@ db_config = {
 detector = dlib.get_frontal_face_detector()
 
 # Dlib landmark / Get face landmarks
-predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
+predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
 
 # Dlib Resnet Use Dlib resnet50 model to get 128D face descriptor
-face_reco_model = dlib.face_recognition_model_v1("data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat")
+face_reco_model = dlib.face_recognition_model_v1("data/data_dlib/dlib_face_recognition_resnet_model_v1.dat")
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
@@ -37,8 +37,8 @@ class Face_Recognizer:
         self.detector = dlib.get_frontal_face_detector()
         
         # 加载模型文件
-        model_path = 'data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat'
-        face_rec_model_path = 'data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat'
+        model_path = 'data/data_dlib/shape_predictor_68_face_landmarks.dat'
+        face_rec_model_path = 'data/data_dlib/dlib_face_recognition_resnet_model_v1.dat'
         
         self.shape_predictor = dlib.shape_predictor(model_path)
         self.face_rec_model = dlib.face_recognition_model_v1(face_rec_model_path)

@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 import logging
 from models.database import db
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -14,18 +15,18 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """登录页面"""
+    current_year = datetime.now().year
+    
     if request.method == 'GET':
         # Redirect if already logged in
         if 'user_id' in session:
             # We need placeholders for admin/user dashboards until those blueprints are created
             # Using temporary direct URL strings might be safer for now if url_for fails
             if session.get('role') == 'admin':
-                 # return redirect(url_for('admin_dashboard')) # Use main app route for now
-                 return redirect('/admin_dashboard')
+                return redirect(url_for('admin.dashboard'))
             else:
-                 # return redirect(url_for('user_dashboard')) # Use main app route for now
-                 return redirect('/user_dashboard')
-        return render_template('login.html')
+                return redirect(url_for('user.dashboard'))
+        return render_template('login.html', current_year=current_year)
 
     if request.method == 'POST':
         try:
@@ -34,11 +35,11 @@ def login():
             
             if not username or not password:
                 flash('请填写用户名和密码', 'danger')
-                return render_template('login.html')
+                return render_template('login.html', current_year=current_year)
                 
             if not db.connect():
                 flash('数据库连接失败', 'danger')
-                return render_template('login.html')
+                return render_template('login.html', current_year=current_year)
                 
             # 查询用户
             db.cursor.execute("""
@@ -52,12 +53,12 @@ def login():
             
             if not user:
                 flash('用户名或密码错误', 'danger')
-                return render_template('login.html')
+                return render_template('login.html', current_year=current_year)
                 
             # 验证密码
             if not check_password_hash(user[2], password):
                 flash('用户名或密码错误', 'danger')
-                return render_template('login.html')
+                return render_template('login.html', current_year=current_year)
                 
             # 设置会话
             session['user_id'] = user[0]
@@ -75,7 +76,7 @@ def login():
         except Exception as e:
             logger.error(f"登录失败: {str(e)}")
             flash('登录失败，请稍后重试', 'danger')
-            return render_template('login.html')
+            return render_template('login.html', current_year=current_year)
 
 # 登出
 @auth_bp.route('/logout')

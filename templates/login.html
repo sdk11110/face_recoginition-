@@ -16,6 +16,10 @@
     <!-- 引入自定义样式 -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     
+    <!-- 引入Three.js和3D背景 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="{{ url_for('static', filename='js/3d-background.js') }}"></script>
+    
     <style>
         :root {
             --primary-color: #4a6fff;
@@ -27,10 +31,12 @@
             --danger-color: #e74c3c;
             --text-color: #333;
             --text-light: #7f8c8d;
-            --bg-color: #f5f8fa;
-            --card-color: rgba(255, 255, 255, 0.95);
+            --bg-color: #000823;
+            --bg-medium: #0c123d;
+            --bg-light: #172254;
+            --card-color: rgba(20, 30, 60, 0.8);
             --border-radius: 12px;
-            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
             --transition: all 0.3s ease;
         }
         
@@ -42,25 +48,31 @@
         
         body {
             font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
+            background-color: var(--bg-color);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            color: #fff;
+            overflow: hidden;
         }
         
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .bg-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
         }
         
         .login-container {
             width: 100%;
             max-width: 420px;
             padding: 1rem;
+            position: relative;
+            z-index: 10;
         }
         
         .login-card {
@@ -70,7 +82,7 @@
             overflow: hidden;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(74, 111, 255, 0.2);
             position: relative;
         }
         
@@ -99,6 +111,7 @@
             margin-bottom: 1rem;
             position: relative;
             display: inline-block;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
         
         .login-title {
@@ -106,6 +119,7 @@
             font-weight: 700;
             margin-bottom: 0.5rem;
             position: relative;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
         
         .login-subtitle {
@@ -127,17 +141,18 @@
             font-weight: 600;
             margin-bottom: 0.5rem;
             font-size: 0.95rem;
-            color: var(--text-color);
+            color: #a0c0ff;
         }
         
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
             font-size: 1rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(74, 111, 255, 0.3);
             border-radius: 8px;
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(20, 30, 50, 0.7);
             transition: var(--transition);
+            color: #fff;
         }
         
         .form-control:focus {
@@ -155,7 +170,7 @@
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-light);
+            color: var(--primary-color);
         }
         
         .icon-input {
@@ -194,7 +209,7 @@
         
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(74, 111, 255, 0.3);
+            box-shadow: 0 0 25px rgba(74, 111, 255, 0.5);
         }
         
         .btn:hover::before {
@@ -210,7 +225,7 @@
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
-            background: rgba(231, 76, 60, 0.1);
+            background: rgba(231, 76, 60, 0.2);
             border-left: 4px solid var(--danger-color);
             color: var(--danger-color);
             font-size: 0.9rem;
@@ -237,34 +252,28 @@
         
         .forgot-password a:hover {
             text-decoration: underline;
+            text-shadow: 0 0 5px rgba(74, 111, 255, 0.5);
         }
         
         .login-footer {
             text-align: center;
             padding: 0 2rem 2rem;
-            color: var(--text-light);
+            color: #8a9baf;
             font-size: 0.9rem;
         }
         
         .error-message {
             color: var(--danger-color);
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            display: none;
-        }
-        
-        .system-error {
-            color: var(--danger-color);
             font-size: 0.9rem;
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            background-color: rgba(231, 76, 60, 0.1);
-            border: 1px solid rgba(231, 76, 60, 0.3);
-            display: none;
+            margin-top: 0.5rem;
         }
         
-        @media (max-width: 576px) {
+        .glow {
+            text-shadow: 0 0 10px rgba(74, 111, 255, 0.7);
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 480px) {
             .login-container {
                 padding: 0.5rem;
             }
@@ -280,109 +289,76 @@
     </style>
 </head>
 <body>
+    <!-- 3D背景容器 -->
+    <div id="bg-container" class="bg-container"></div>
+    
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
                 <div class="login-logo">
-                    <i class="fas fa-user-circle"></i>
+                    <i class="fas fa-fingerprint"></i>
                 </div>
-                <h1 class="login-title">人脸识别考勤系统</h1>
-                <p class="login-subtitle">现代化的考勤解决方案</p>
+                <h1 class="login-title glow">人脸识别考勤系统</h1>
+                <p class="login-subtitle">请登录以继续</p>
             </div>
             
             <div class="login-body">
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% if messages %}
-                    {% for category, message in messages %}
-                      <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                  {% endif %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="alert-icon fas fa-exclamation-circle"></i>
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
                 {% endwith %}
-                <form id="loginForm" method="POST" action="{{ url_for('auth.login') }}">
+                
+                <form method="POST" action="{{ url_for('auth.login') }}">
                     <div class="form-group">
                         <label class="form-label" for="username">用户名</label>
                         <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
+                            <i class="input-icon fas fa-user"></i>
                             <input type="text" class="form-control icon-input" id="username" name="username" required>
                         </div>
-                        <div class="error-message" id="username-error"></div>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="password">密码</label>
                         <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
+                            <i class="input-icon fas fa-lock"></i>
                             <input type="password" class="form-control icon-input" id="password" name="password" required>
                         </div>
-                        <div class="error-message" id="password-error"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="role">选择角色</label>
-                        <div class="input-group">
-                            <i class="fas fa-user-tag input-icon"></i>
-                            <select class="form-control icon-input" id="role" name="role" required>
-                                <option value="" disabled selected>-- 请选择 --</option>
-                                <option value="user">学生</option>
-                                <option value="admin">管理员</option>
-                            </select>
-                        </div>
-                        <div class="error-message" id="role-error"></div>
                     </div>
                     
                     <div class="forgot-password">
-                        <a href="#">忘记密码？</a>
+                        <a href="#">忘记密码?</a>
                     </div>
                     
                     <button type="submit" class="btn">登录</button>
-                    <div class="system-error" id="system-error"></div>
                 </form>
             </div>
             
             <div class="login-footer">
-                <p>© 2025 人脸识别考勤系统</p>
+                &copy; {{ current_year|default(2025) }} 人脸识别考勤系统 | 版本 1.0
             </div>
         </div>
     </div>
-
+    
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            // 清除之前的错误信息
-            document.querySelectorAll('.error-message, .system-error').forEach(el => {
-                el.style.display = 'none';
+        // 初始化3D背景
+        document.addEventListener('DOMContentLoaded', function() {
+            const background = new TechBackground('bg-container', {
+                particleCount: 800,
+                particleColor: 0x4a6fff,
+                lineColor: 0x4a6fff,
+                backgroundColor: 0x000823,
+                particleSize: 0.6,
+                lineOpacity: 0.2,
+                gridSize: 100,
+                gridDivisions: 20,
+                autoAdjust: true
             });
-            
-            let hasError = false;
-            
-            // 验证用户名
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                document.getElementById('username-error').textContent = '请输入用户名';
-                document.getElementById('username-error').style.display = 'block';
-                hasError = true;
-            }
-            
-            // 验证密码
-            const password = document.getElementById('password').value.trim();
-            if (!password) {
-                document.getElementById('password-error').textContent = '请输入密码';
-                document.getElementById('password-error').style.display = 'block';
-                hasError = true;
-            }
-            
-            // 验证角色选择
-            const role = document.getElementById('role').value;
-            if (!role) {
-                document.getElementById('role-error').textContent = '请选择角色';
-                document.getElementById('role-error').style.display = 'block';
-                hasError = true;
-            }
-            
-            if (!hasError) {
-                this.submit();
-            }
         });
     </script>
 </body>

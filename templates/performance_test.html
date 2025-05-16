@@ -1,0 +1,87 @@
+{% extends "tech_layout.html" %}
+
+{% block title %}性能测试{% endblock %}
+
+{% block header %}系统性能测试{% endblock %}
+
+{% block content %}
+<div class="section">
+    <h3>人脸识别性能</h3>
+    <button class="btn btn-primary btn-custom" onclick="runTest('recognition')">测试识别速度</button>
+    <p class="text-muted small">测试处理多张静态图片的平均识别时间。</p>
+</div>
+
+<div class="section">
+    <h3>视频流处理性能</h3>
+    <button class="btn btn-info btn-custom" onclick="runTest('fps')">测试摄像头FPS</button>
+    <p class="text-muted small">测试摄像头实时视频流的处理帧率和识别率。</p>
+</div>
+
+<div class="section">
+    <h3>页面和数据库响应</h3>
+    <button class="btn btn-success btn-custom" onclick="runTest('page_load')">测试页面加载速度</button>
+    <button class="btn btn-warning btn-custom" onclick="runTest('query')">测试数据库查询速度</button>
+    <p class="text-muted small">模拟典型页面加载和数据库查询操作，评估响应时间。</p>
+</div>
+
+<div id="loading-spinner" class="text-center" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">加载中...</span>
+    </div>
+    <p>测试进行中，请稍候...</p>
+</div>
+
+<div class="results-block">
+    <h4>测试结果:</h4>
+    <pre id="test-output">点击按钮开始测试...</pre>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function runTest(testType) {
+        $('#test-output').text('正在执行 ' + testType + ' 测试...');
+        $('#loading-spinner').show();
+        
+        $.ajax({
+            url: "{{ url_for('performance_test') }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ type: testType }),
+            success: function(response) {
+                $('#loading-spinner').hide();
+                if (response.status === 'success') {
+                    let output = '测试类型: ' + testType + '\n';
+                    output += '状态: 成功\n';
+                    if (testType === 'recognition') {
+                        output += '平均识别时间: ' + response.recognition_time + ' ms\n';
+                        output += '测试图片数: ' + response.tested_images + '\n';
+                        output += '成功识别数: ' + response.recognized_count + '\n';
+                        output += '识别率: ' + response.recognition_rate + '%\n';
+                        output += '详细结果:\n' + JSON.stringify(response.details, null, 2);
+                    } else if (testType === 'fps') {
+                        output += '摄像头FPS: ' + response.fps + '\n';
+                        output += '测试帧数: ' + response.tested_frames + '\n';
+                        output += '识别帧数: ' + response.recognized_frames + '\n';
+                        output += '识别率: ' + response.recognition_rate + '%\n';
+                        output += '测试时长: ' + response.duration + ' 秒\n';
+                    } else if (testType === 'page_load') {
+                        output += '平均页面加载时间: ' + response.load_time + ' 秒\n';
+                        output += '测试次数: ' + response.test_count + '\n';
+                    } else if (testType === 'query') {
+                        output += '平均数据库查询时间: ' + response.query_time + ' 秒\n';
+                        output += '测试次数: ' + response.test_count + '\n';
+                    }
+                    $('#test-output').text(output);
+                } else {
+                    $('#test-output').text('测试失败: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loading-spinner').hide();
+                $('#test-output').text('请求错误: ' + xhr.responseText);
+            }
+        });
+    }
+</script>
+{% endblock %} 

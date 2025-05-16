@@ -34,56 +34,56 @@ def attendance_query():
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # 构建查询条件
-        query_conditions = []
-        query_params = []
-        
-        if start_date:
-            query_conditions.append("DATE(a.check_in_time) >= %s")
-            query_params.append(start_date)
-        if end_date:
-            query_conditions.append("DATE(a.check_in_time) <= %s")
-            query_params.append(end_date)
+        # 修复：使用 with 语句正确使用上下文管理器
+        with get_db_connection() as conn:
+            cursor = conn.cursor(dictionary=True)
             
-        # 根据用户角色决定查询范围
-        if session.get('role') != 'admin':
-            query_conditions.append("u.id = %s")
-            query_params.append(session.get('user_id'))
-        
-        # 构建完整的SQL查询
-        base_query = """
-            SELECT 
-                u.name,
-                DATE(a.check_in_time) as date,
-                TIME(a.check_in_time) as check_in,
-                TIME(a.check_out_time) as check_out,
-                CASE 
-                    WHEN TIME(a.check_in_time) > '09:00:00' THEN '迟到'
-                    ELSE '正常'
-                END as status,
-                CASE 
-                    WHEN a.check_out_time IS NULL THEN '未签退'
-                    WHEN TIME(a.check_out_time) < '18:00:00' THEN '早退'
-                    ELSE '正常'
-                END as leave_status
-            FROM attendance a
-            JOIN users u ON a.user_id = u.id
-        """
-        
-        if query_conditions:
-            base_query += " WHERE " + " AND ".join(query_conditions)
-        
-        base_query += " ORDER BY a.check_in_time DESC"
-        
-        # 执行查询
-        cursor.execute(base_query, query_params)
-        attendance_data = cursor.fetchall()
-        
-        cursor.close()
-        conn.close()
+            # 构建查询条件
+            query_conditions = []
+            query_params = []
+            
+            if start_date:
+                query_conditions.append("DATE(a.check_in_time) >= %s")
+                query_params.append(start_date)
+            if end_date:
+                query_conditions.append("DATE(a.check_in_time) <= %s")
+                query_params.append(end_date)
+                
+            # 根据用户角色决定查询范围
+            if session.get('role') != 'admin':
+                query_conditions.append("u.id = %s")
+                query_params.append(session.get('user_id'))
+            
+            # 构建完整的SQL查询
+            base_query = """
+                SELECT 
+                    u.name,
+                    DATE(a.check_in_time) as date,
+                    TIME(a.check_in_time) as check_in,
+                    TIME(a.check_out_time) as check_out,
+                    CASE 
+                        WHEN TIME(a.check_in_time) > '09:00:00' THEN '迟到'
+                        ELSE '正常'
+                    END as status,
+                    CASE 
+                        WHEN a.check_out_time IS NULL THEN '未签退'
+                        WHEN TIME(a.check_out_time) < '18:00:00' THEN '早退'
+                        ELSE '正常'
+                    END as leave_status
+                FROM attendance a
+                JOIN users u ON a.user_id = u.id
+            """
+            
+            if query_conditions:
+                base_query += " WHERE " + " AND ".join(query_conditions)
+            
+            base_query += " ORDER BY a.check_in_time DESC"
+            
+            # 执行查询
+            cursor.execute(base_query, query_params)
+            attendance_data = cursor.fetchall()
+            
+            # 不需要手动关闭cursor和conn，上下文管理器会处理
         
         return render_template(
             'attendance_query.html',
@@ -97,7 +97,16 @@ def attendance_query():
     except Exception as e:
         logger.error(f"查询考勤记录失败: {str(e)}")
         flash(f'获取数据失败: {str(e)}', 'danger')
-        return render_template('admin-dashboard.html')
+        
+        # 确保错误页面传递了必要的参数，避免模板渲染错误
+        # 创建一个返回空内容的默认值
+        return render_template('attendance_query.html', 
+                              attendance_data=[],
+                              no_data=True,
+                              start_date=None,
+                              end_date=None,
+                              is_admin=session.get('role') == 'admin',
+                              error_message=str(e))
 
 @attendance_bp.route('/check_in_page')
 @login_required
@@ -473,8 +482,8 @@ def batch_check_in():
             return jsonify({'status': 'error', 'message': '未检测到人脸'})
             
         # 获取人脸特征提取器
-        shape_predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
-        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
+        shape_predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
+        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
         
         # 获取所有已注册用户的人脸特征
         conn = get_db_connection()

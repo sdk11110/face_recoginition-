@@ -35,6 +35,8 @@ from controllers.test_controller import test_api
 from blueprints.auth_bp import auth_bp
 from blueprints.admin_bp import admin_bp
 from blueprints.attendance_bp import attendance_bp
+from blueprints.user_bp import user_bp
+from face_recognition_evaluator import FaceRecognitionEvaluator
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -55,12 +57,23 @@ socketio = SocketIO(app)
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(attendance_bp)
+app.register_blueprint(user_bp)
 
 # 添加自定义过滤器
 @app.template_filter('format_date')
 def format_date(date):
     """格式化日期"""
     return date.strftime('%Y-%m-%d %H:%M:%S')
+
+@app.template_filter('date_format')
+def date_format(date):
+    """格式化日期（简化版）"""
+    if not date:
+        return '未知'
+    try:
+        return date.strftime('%Y-%m-%d')
+    except:
+        return str(date)
 
 # 配置人脸数据集路径
 app.config['FACE_DATASET_PATH'] = os.path.join(os.path.dirname(__file__), 'data/data_faces_from_camera')
@@ -192,6 +205,11 @@ def admin_required(func):
             return redirect(url_for('user_dashboard'))
         return func(*args, **kwargs)
     return wrapper
+
+# 检查当前用户是否是管理员
+def is_admin():
+    """检查当前用户是否是管理员"""
+    return session.get('role') == 'admin'
 
 @app.route('/')
 @login_required
@@ -471,26 +489,80 @@ def face_recognition_endpoint():
 
 def get_attendance_records(user_name=None):
     try:
+        # 获取查询参数
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 构建查询条件和参数
+        conditions = []
+        params = []
         
         if user_name:
-            cursor.execute(
-                "SELECT name, check_in_time, DATE(check_in_time) as date FROM attendance WHERE name = %s ORDER BY check_in_time DESC",
-                (user_name,)
-            )
-        else:
-            cursor.execute(
-                "SELECT name, check_in_time, DATE(check_in_time) as date FROM attendance ORDER BY check_in_time DESC"
-            )
+            conditions.append("name = %s")
+            params.append(user_name)
+        elif session.get('role') != 'admin':
+            # 如果不是管理员，只能查询自己的记录
+            conditions.append("user_id = %s")
+            params.append(session.get('user_id'))
             
+        if start_date:
+            conditions.append("DATE(check_in_time) >= %s")
+            params.append(start_date)
+            
+        if end_date:
+            conditions.append("DATE(check_in_time) <= %s")
+            params.append(end_date)
+            
+        # 构建SQL查询
+        query = """
+            SELECT 
+                name, 
+                DATE(check_in_time) as date,
+                TIME(check_in_time) as check_in_time,
+                TIME(check_out_time) as check_out_time,
+                CASE 
+                    WHEN TIME(check_in_time) > '09:00:00' THEN '迟到'
+                    ELSE '正常'
+                END as status
+            FROM attendance
+        """
+        
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+            
+        query += " ORDER BY check_in_time DESC"
+        
+        cursor.execute(query, params)
         records = cursor.fetchall()
+        
         cursor.close()
         conn.close()
-        return records
+        
+        # 格式化日期和时间
+        formatted_records = []
+        for record in records:
+            formatted_records.append({
+                'name': record['name'],
+                'date': record['date'].strftime('%Y-%m-%d') if record['date'] else '',
+                'check_in_time': str(record['check_in_time']) if record['check_in_time'] else '',
+                'check_out_time': str(record['check_out_time']) if record['check_out_time'] else '',
+                'status': record['status']
+            })
+        
+        return jsonify({
+            'success': True,
+            'records': formatted_records
+        })
     except Exception as e:
-        print(f"获取考勤记录失败: {str(e)}")
-        return []
+        logger.error(f"获取考勤记录失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'获取考勤记录失败: {str(e)}',
+            'records': []
+        })
 
 @app.route('/start_recognition', methods=['POST'])
 @login_required
@@ -535,8 +607,8 @@ def start_recognition():
             })
             
         # 获取人脸特征提取器
-        shape_predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
-        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
+        shape_predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
+        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
         
         # 从数据库获取人脸特征和用户信息
         conn = get_db_connection()
@@ -790,8 +862,8 @@ def face_recognition_test_endpoint():
             })
         
         # 获取人脸特征
-        shape_predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
-        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
+        shape_predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
+        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
         
         shape = shape_predictor(frame, faces[0])
         face_descriptor = face_rec_model.compute_face_descriptor(frame, shape)
@@ -1258,6 +1330,164 @@ def get_attendance_statistics_route():
         return jsonify({'success': False, 'message': '请先登录'})
     return get_attendance_statistics()
 
+@app.route('/export_attendance_statistics')
+@login_required
+def export_attendance_statistics():
+    """导出考勤统计数据"""
+    try:
+        # 获取导出格式
+        export_format = request.args.get('format', 'csv')
+        selected_month = request.args.get('month', datetime.now().strftime('%Y-%m'))
+        
+        # 解析月份参数
+        if selected_month:
+            try:
+                year, month = map(int, selected_month.split('-'))
+                start_date = datetime(year, month, 1)
+                # 获取下个月的第一天，然后减去1天，得到当前月的最后一天
+                if month == 12:
+                    end_date = datetime(year+1, 1, 1) - timedelta(days=1)
+                else:
+                    end_date = datetime(year, month+1, 1) - timedelta(days=1)
+            except:
+                # 如果解析失败，使用当前月
+                today = datetime.now()
+                start_date = datetime(today.year, today.month, 1)
+                if today.month == 12:
+                    end_date = datetime(today.year+1, 1, 1) - timedelta(days=1)
+                else:
+                    end_date = datetime(today.year, today.month+1, 1) - timedelta(days=1)
+        else:
+            # 默认使用当前月
+            today = datetime.now()
+            start_date = datetime(today.year, today.month, 1)
+            if today.month == 12:
+                end_date = datetime(today.year+1, 1, 1) - timedelta(days=1)
+            else:
+                end_date = datetime(today.year, today.month+1, 1) - timedelta(days=1)
+                
+        # 构建查询条件
+        conditions = []
+        params = []
+        
+        # 添加日期范围条件
+        conditions.append("check_in_time >= %s")
+        params.append(start_date)
+        conditions.append("check_in_time <= %s")
+        params.append(end_date)
+        
+        # 如果不是管理员，只能导出自己的数据
+        if session.get('role') != 'admin':
+            conditions.append("user_id = %s")
+            params.append(session.get('user_id'))
+            
+        # 构建SQL查询
+        query = """
+            SELECT 
+                u.name,
+                DATE(a.check_in_time) as date,
+                TIME(a.check_in_time) as check_in_time,
+                TIME(a.check_out_time) as check_out_time,
+                CASE 
+                    WHEN TIME(a.check_in_time) > '09:00:00' THEN '迟到'
+                    ELSE '正常'
+                END as check_in_status,
+                CASE 
+                    WHEN a.check_out_time IS NULL THEN '未签退'
+                    WHEN TIME(a.check_out_time) < '18:00:00' THEN '早退'
+                    ELSE '正常'
+                END as check_out_status,
+                a.emotion
+            FROM attendance a
+            JOIN users u ON a.user_id = u.id
+        """
+        
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+            
+        query += " ORDER BY a.check_in_time ASC"
+        
+        # 执行查询
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, params)
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        # 格式化数据
+        formatted_records = []
+        for record in records:
+            formatted_records.append({
+                '姓名': record['name'],
+                '日期': record['date'].strftime('%Y-%m-%d') if record['date'] else '',
+                '签到时间': str(record['check_in_time']) if record['check_in_time'] else '',
+                '签退时间': str(record['check_out_time']) if record['check_out_time'] else '',
+                '签到状态': record['check_in_status'],
+                '签退状态': record['check_out_status'],
+                '情绪状态': record['emotion'] if record['emotion'] else '未记录'
+            })
+        
+        # 导出数据
+        if export_format.lower() == 'csv':
+            # 生成CSV文件
+            import csv
+            import io
+            
+            output = io.StringIO()
+            fieldnames = ['姓名', '日期', '签到时间', '签退时间', '签到状态', '签退状态', '情绪状态']
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(formatted_records)
+            
+            response = Response(
+                output.getvalue(), 
+                mimetype='text/csv', 
+                headers={'Content-Disposition': f'attachment; filename=attendance_statistics_{selected_month}.csv'}
+            )
+            return response
+            
+        elif export_format.lower() == 'excel':
+            # 生成Excel文件
+            import xlsxwriter
+            import io
+            
+            output = io.BytesIO()
+            workbook = xlsxwriter.Workbook(output)
+            worksheet = workbook.add_worksheet('考勤统计')
+            
+            # 添加表头
+            headers = ['姓名', '日期', '签到时间', '签退时间', '签到状态', '签退状态', '情绪状态']
+            for col, header in enumerate(headers):
+                worksheet.write(0, col, header)
+                
+            # 添加数据行
+            for row, record in enumerate(formatted_records, 1):
+                worksheet.write(row, 0, record['姓名'])
+                worksheet.write(row, 1, record['日期'])
+                worksheet.write(row, 2, record['签到时间'])
+                worksheet.write(row, 3, record['签退时间'])
+                worksheet.write(row, 4, record['签到状态'])
+                worksheet.write(row, 5, record['签退状态'])
+                worksheet.write(row, 6, record['情绪状态'])
+                
+            workbook.close()
+            output.seek(0)
+            
+            response = Response(
+                output.getvalue(), 
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                headers={'Content-Disposition': f'attachment; filename=attendance_statistics_{selected_month}.xlsx'}
+            )
+            return response
+        
+        else:
+            return jsonify({'success': False, 'message': '不支持的导出格式'})
+        
+    except Exception as e:
+        logger.error(f"导出考勤统计数据失败: {str(e)}")
+        return jsonify({'success': False, 'message': f'导出考勤统计数据失败: {str(e)}'})
+
 @app.route('/test_api', methods=['POST'])
 def test_api_route():
     return test_api()
@@ -1296,8 +1526,8 @@ def face_recognition_test_with_db(image_path=None, known_faces=None):
             return {'status': 'error', 'message': '检测到多个人脸，请确保画面中只有一个人脸'}
         
         # 获取人脸特征
-        shape_predictor = dlib.shape_predictor('data/data_dlib/data_dlib/shape_predictor_68_face_landmarks.dat')
-        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
+        shape_predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
+        face_rec_model = dlib.face_recognition_model_v1('data/data_dlib/dlib_face_recognition_resnet_model_v1.dat')
         
         # 如果提供了已知人脸数据，则使用它
         if known_faces:
@@ -1383,55 +1613,93 @@ def face_recognition_test_with_db(image_path=None, known_faces=None):
 @app.route('/user_dashboard')
 @login_required
 def user_dashboard():
-    """用户仪表盘"""
-    # 这里可以添加获取用户特定数据的逻辑
-    user_id = session.get('user_id')
-    if not user_id:
+    """用户仪表盘 - 重定向到蓝图中的用户仪表盘"""
+    return redirect(url_for('user.dashboard'))
+
+@app.route('/performance_test_page')
+@login_required
+@admin_required
+def performance_test_page():
+    """性能测试页面"""
+    return render_template('performance_test.html')
+
+@app.route('/random_image_test_page')
+def random_image_test_page():
+    """随机图片识别测试页面"""
+    if not is_admin():
+        flash('只有管理员可以访问此页面', 'danger')
         return redirect(url_for('auth.login'))
+    return render_template('random_image_test.html')
+
+@app.route('/run_face_evaluation', methods=['POST'])
+def run_face_evaluation():
+    """处理人脸识别评估请求"""
+    if not is_admin():
+        return jsonify({'status': 'error', 'message': '只有管理员可以执行此操作'})
+    
+    try:
+        # 获取请求参数
+        test_path = request.json.get('test_path', 'data/test_faces')
         
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    
-    # 获取最近打卡记录
-    cursor.execute("""
-        SELECT DATE(check_in_time) as check_date, TIME_FORMAT(check_in_time, '%H:%i:%s') as check_time
-        FROM attendance
-        WHERE user_id = %s
-        ORDER BY check_in_time DESC
-        LIMIT 5
-    """, (user_id,))
-    recent_records = cursor.fetchall()
-    
-    # 获取本月打卡天数
-    today = datetime.now()
-    start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    cursor.execute("""
-        SELECT COUNT(DISTINCT DATE(check_in_time))
-        FROM attendance
-        WHERE user_id = %s AND check_in_time >= %s
-    """, (user_id, start_of_month))
-    monthly_days = cursor.fetchone()['COUNT(DISTINCT DATE(check_in_time))']
-    
-    # 检查今天是否已打卡
-    today_str = today.strftime('%Y-%m-%d')
-    cursor.execute("SELECT COUNT(*) FROM attendance WHERE user_id = %s AND DATE(check_in_time) = %s", (user_id, today_str))
-    checked_today = cursor.fetchone()['COUNT(*)'] > 0
-    
-    cursor.close()
-    conn.close()
-    
-    # 模拟已工作天数，实际应从数据库获取
-    user['days_worked'] = 100 # 示例数据
-    
-    return render_template('user-dashboard.html', 
-                             user=user,
-                             recent_records=recent_records,
-                             monthly_days=monthly_days,
-                             checked_today=checked_today,
-                             now_str=today.strftime('%Y年%m月%d日') # 添加当前日期字符串
-                             )
+        # 验证路径是否存在
+        if not os.path.exists(test_path):
+            return jsonify({
+                'status': 'error', 
+                'message': f'测试路径不存在: {test_path}'
+            })
+            
+        # 创建评估器实例
+        evaluator = FaceRecognitionEvaluator(test_dataset_path=test_path)
+        
+        # 运行评估
+        results = evaluator.evaluate()
+        
+        if not results:
+            return jsonify({
+                'status': 'error', 
+                'message': '评估过程中出现错误，未返回结果'
+            })
+            
+        # 生成报告
+        report = evaluator.generate_report()
+        
+        # 获取报告中的图表文件路径
+        # 确保图表保存在静态目录下
+        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        
+        # 复制图表到静态目录
+        metrics_plot_name = os.path.basename(report['metrics_plot'])
+        roc_curve_name = os.path.basename(report['roc_curve'])
+        
+        metrics_plot_dest = os.path.join(static_dir, 'reports', metrics_plot_name)
+        roc_curve_dest = os.path.join(static_dir, 'reports', roc_curve_name)
+        
+        # 确保目标目录存在
+        os.makedirs(os.path.join(static_dir, 'reports'), exist_ok=True)
+        
+        # 复制文件
+        shutil.copy(report['metrics_plot'], metrics_plot_dest)
+        shutil.copy(report['roc_curve'], roc_curve_dest)
+        
+        # 构建返回结果
+        response = {
+            'status': 'success',
+            'summary': report['summary'],
+            'metrics_plot': f'reports/{metrics_plot_name}',
+            'roc_curve': f'reports/{roc_curve_name}',
+            'report_dir': report['report_dir']
+        }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        logger.error(f"评估过程中出现错误: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'status': 'error', 
+            'message': f'评估过程中出现错误: {str(e)}'
+        })
 
 if __name__ == '__main__':
     # 确保上传文件夹存在

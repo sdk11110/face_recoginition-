@@ -4,6 +4,7 @@ import dlib
 import time
 from models.face_recognition import face_recognizer
 from models.attendance import attendance
+from datetime import datetime
 
 def video_feed():
     """生成视频流"""
@@ -70,4 +71,27 @@ def attendance_statistics_page():
     """考勤统计页面"""
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
-    return render_template('attendance_statistics.html') 
+    
+    # 初始化所需的变量
+    total_days = 0
+    normal_days = 0
+    late_days = 0
+    early_leave_days = 0
+    dates = []
+    attendance_data = []
+    emotion_stats = {}
+    selected_month = datetime.now().strftime('%Y-%m')
+    is_admin = session.get('role') == 'admin'
+    user_rankings = []
+    
+    return render_template('attendance_statistics.html',
+                          total_days=total_days,
+                          normal_days=normal_days,
+                          late_days=late_days,
+                          early_leave_days=early_leave_days,
+                          dates=dates,
+                          attendance_data=attendance_data,
+                          emotion_stats=emotion_stats,
+                          selected_month=selected_month,
+                          is_admin=is_admin,
+                          user_rankings=user_rankings) 
