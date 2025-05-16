@@ -22,4 +22,10 @@ ENV/
 
 # 排除系统文件
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# 排除大文件
+FER2013_VGG19/PrivateTest_model.t7
+FER2013_VGG19/fer2013.csv
+*.csv
+*.t7 
